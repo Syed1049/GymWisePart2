@@ -19,6 +19,11 @@ import BookingPage from './BookingPage';
 import UpcomingBookingsPage from './UpcomingBookingsPage';
 import TimePicker from './TimePicker';
 import NewHome from './newhome';
+import GoalDetailsScreen from './GoalDetailsScreen';
+import WorkoutPlanScreen from './WorkoutPlanScreen';
+import GoalsScreen from './GoalsScreen';
+import MuscleGroupsScreen from './MuscleGroupsScreen';
+import DashboardScreen from './DashboardScreen';
 import TrainerPage from './TrainerPage';
 import BMI from './BMI';
 import FitnessDashboard from './FitnessDashboard';
@@ -63,6 +68,7 @@ export default function App()  {
   component={BookingPage}
   options={{ headerShown: false }} // Hide the header
 />
+
 <Stack.Screen name="TimePicker" component={TimePicker} />
       <Stack.Navigator initialRouteName="Tutorial">
       <Stack.Screen name=" " component={NewHome} 
@@ -82,7 +88,13 @@ export default function App()  {
           <Stack.Screen name="SignInScreen" component={SignInScreen} options={{ headerShown: false }} />
           <Stack.Screen name="BookingPage" component={BookingPage} options={{ headerShown: false }} />
           <Stack.Screen name="TimePicker" component={TimePicker} />
-          <Stack.Screen name="TrainerPage" component={TrainerPage} />
+          <Stack.Screen name="GoalDetailsScreen" component={GoalDetailsScreen}  />
+          <Stack.Screen name="FitnessDashboard" component={FitnessDashboard}  />
+          <Stack.Screen name="WorkoutPlanScreen" component={WorkoutPlanScreen} />
+          <Stack.Screen name="DashboardScreen" component={DashboardScreen} options={{headerShown:false}} />
+          <Stack.Screen name="GoalsScreen" component={GoalsScreen}  options={{ headerShown: false }}/>
+          <Stack.Screen name="MuscleGroupsScreen" component={MuscleGroupsScreen}  options={{ headerShown: false }}/>
+          {/* <Stack.Screen name="TrainerPage" component={TrainerPage} />
 <Stack.Screen name="BMI" component={BMI} />
 <Stack.Screen name="FitnessDashboard" component={FitnessDashboard} />
 <Stack.Screen name="AttendancePage" component={AttendancePage} />
@@ -93,7 +105,7 @@ export default function App()  {
 <Stack.Screen name="Plans" component={Plans} />
 <Stack.Screen name="ProfileScreen" component={ProfileScreen} />
 <Stack.Screen name="RecentActivityPage" component={RecentActivityPage} />
-<Stack.Screen name="SelectDateAndSlot" component={SelectDateAndSlot} />
+<Stack.Screen name="SelectDateAndSlot" component={SelectDateAndSlot} /> */}
 
       </Stack.Navigator>
     </NavigationContainer>

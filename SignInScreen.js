@@ -51,7 +51,7 @@ const SignInScreen = () => {
         setUserId(userData.id);
         saveUserSession(userData.id); // Save user session
         // Navigate to the home screen or user dashboard
-        navigation.navigate('UpcomingBookingsPage');
+        navigation.navigate('DashboardScreen');
       } else {
         console.log('Invalid email or password.');
         Alert.alert('Login Failed', 'Invalid email or password. Please try again.');
@@ -63,7 +63,7 @@ const SignInScreen = () => {
 
   useEffect(() => {
     if (userId) {
-      navigation.navigate('UpcomingBookingsPage');
+      navigation.navigate('DashboardScreen');
     }
   }, [userId, navigation]);
 

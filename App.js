@@ -13,6 +13,7 @@ import LoginScreen from './LoginScreen';
 import AdminLoginScreen from './AdminLoginScreen';
 import MemberSupportScreen from './MemberSupportScreen';
 import UserDashboard from './UserDashboard';
+import Store from './Store';
 import SignInScreen from './SignInScreen';
 import SignUpScreen from './SignUpScreen';
 import BookingPage from './BookingPage';
@@ -81,6 +82,7 @@ export default function App()  {
           <Stack.Screen name="TutorialHome" component={TutorialHome}/>
           <Stack.Screen name="BodyPartVideosScreen" component={BodyPartVideosScreen} />
           <Stack.Screen name= "AdminLoginScreen" component={AdminLoginScreen}/>
+          <Stack.Screen name= "Store" component={Store}/>
           <Stack.Screen name= "MemberSupportScreen" component={MemberSupportScreen}/>
           <Stack.Screen name= "UserDashboard" component={UserDashboard}/>
           <Stack.Screen name="Newhome" component={NewHome} options={{ headerShown: false }} />

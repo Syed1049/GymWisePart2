@@ -24,6 +24,7 @@ import WorkoutPlanScreen from './WorkoutPlanScreen';
 import GoalsScreen from './GoalsScreen';
 import MuscleGroupsScreen from './MuscleGroupsScreen';
 import DashboardScreen from './DashboardScreen';
+import PlanDetailsScreen from './PlanDetailsScreen';
 import TrainerPage from './TrainerPage';
 import BMI from './BMI';
 import FitnessDashboard from './FitnessDashboard';
@@ -93,6 +94,7 @@ export default function App()  {
           <Stack.Screen name="WorkoutPlanScreen" component={WorkoutPlanScreen} />
           <Stack.Screen name="DashboardScreen" component={DashboardScreen} options={{headerShown:false}} />
           <Stack.Screen name="GoalsScreen" component={GoalsScreen}  options={{ headerShown: false }}/>
+          <Stack.Screen name="PlanDetailsScreen" component={PlanDetailsScreen}  options={{ headerShown: false }}/>
           <Stack.Screen name="MuscleGroupsScreen" component={MuscleGroupsScreen}  options={{ headerShown: false }}/>
           {/* <Stack.Screen name="TrainerPage" component={TrainerPage} />
 <Stack.Screen name="BMI" component={BMI} />

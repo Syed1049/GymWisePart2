@@ -1,12 +1,13 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView ,TouchableOpacity} from 'react-native';
-
+import { useNavigation } from '@react-navigation/native';
 const WorkoutPlanScreen = ({ route }) => {
+
   const { recommendedExercises } = route.params; // Receive recommended exercises from route params
+  const navigation =useNavigation();
   console.log("Received recommended exercises:", recommendedExercises);
   const handleSubmit = () => {
-    // Handle submit logic here
-    console.log("Submit button pressed");
+  navigation.navigate('GoalsScreen');
   };
 
   return (
@@ -34,7 +35,7 @@ const WorkoutPlanScreen = ({ route }) => {
         ) : (
           <Text style={styles.errorText}>No workout plan available</Text>)}
           <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-          <Text style={styles.submitButtonText}>Submit</Text>
+          <Text style={styles.submitButtonText}>Okay</Text>
         </TouchableOpacity>
       </ScrollView>
     </View>
@@ -89,7 +90,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 35,
     marginTop: 20,
-  
+    width:100,
+  alignSelf:'center',
   },
   submitButtonText: {
     color: 'black',

@@ -1,75 +1,69 @@
-import React ,{useState,useEffect}from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
-import { Ionicons } from '@expo/vector-icons'; // Import Ionicons for icons
-import { useNavigation } from '@react-navigation/native'; // Import useNavigation hook
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator, ScrollView } from 'react-native';
+import { Ionicons } from '@expo/vector-icons'; 
+import { useNavigation } from '@react-navigation/native';
 import { getUserSession } from './SessionService';
 import { supabase } from './supabase';
+
 const GoalsScreen = () => {
   const [savedGoals, setSavedGoals] = useState([]);
-  const [userId, setUserId] = useState(); // State to hold the user ID
-  const navigation = useNavigation(); // Initialize navigation using useNavigation hook
+  const [loading, setLoading] = useState(true); // State to track loading status
+  const navigation = useNavigation();
 
   useEffect(() => {
-         fetchUserSession();
+    fetchUserSession();
+  }, []);
 
-      // Function to fetch saved goals from the database
-      const fetchSavedGoals = async () => {
-  
-        console.log(userId);
-        try {
-          // Fetch goals data from the database
-          const { data, error } = await supabase
-            .from('workoutplans')
-            .select('*')
-            .eq('user_id', userId);
-  
-          if (error) {
-            throw new Error(error.message);
-          }
-  
-          // Update state with fetched goals data
-          setSavedGoals(data || []);
-          console.log(data);
-        } catch (error) {
-          console.error('Error fetching saved goals:', error.message);
-        }
-      };
-  
-      // Call the fetchSavedGoals function to fetch saved goals when the component mounts
-      fetchSavedGoals();
-    }, []);
-  
-
-
-  const handlePlusButtonPress = () => {
-    // Navigate to the screen where you want to add new goals
-    navigation.navigate('GoalDetailsScreen');
-  };
   const fetchUserSession = async () => {
     try {
       const session = await getUserSession();
       if (session && session.userId) {
-        setUserId(session.userId);
+        await setSavedGoals([]); // Clear previous goals
+        await fetchSavedGoals(session.userId);
       }
     } catch (error) {
       console.error('Error fetching user session:', error.message);
+      setLoading(false); // Update loading status in case of error
     }
+  };
+
+  const fetchSavedGoals = async (userId) => {
+    try {
+      const { data, error } = await supabase
+        .from('workoutplans')
+        .select('*')
+        .eq('user_id', userId);
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      setSavedGoals(data || []);
+    } catch (error) {
+      console.error('Error fetching saved goals:', error.message);
+    } finally {
+      setLoading(false); // Update loading status after fetching goals
+    }
+  };
+
+  const handlePlusButtonPress = () => {
+    navigation.navigate('GoalDetailsScreen');
+  };
+
+  const handlePlayButtonPress = (planId) => {
+    navigation.navigate('PlanDetailsScreen', { planId });
   };
 
   return (
     <View style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
         <Text style={styles.heading}>Goals</Text>
-        {/* Removed the Add button from the header */}
       </View>
 
-      {/* Search Bar */}
       <View style={styles.searchBar}>
-        {/* Search Input */}
         <View style={styles.searchInput}>
           <Ionicons name="search" size={20} color="#CA9329" />
           <TextInput
@@ -79,21 +73,26 @@ const GoalsScreen = () => {
           />
           <Ionicons name="filter" size={20} color="#CA9329" />
         </View>
-        {/* Plus Icon */}
         <TouchableOpacity style={styles.plusIconContainer} onPress={handlePlusButtonPress}>
           <Ionicons name="add" size={30} color="#CA9329" />
         </TouchableOpacity>
       </View>
 
-      <View style={styles.blackishGreySection}>
-  {/* Display Saved Goals Here */}
-  {savedGoals.map((goal, index) => (
-    <View key={index} style={styles.blackishGreySection}>
-      <Text style={styles.heading}>{goal.plan_name}</Text>
-    </View>
-  ))}
-</View>
-
+      {loading ? (
+        <ActivityIndicator style={styles.loadingIndicator} size="large" color="#CA9329" />
+      ) : (
+        <ScrollView style={styles.goalContainer}>
+          {savedGoals.map((goal, index) => (
+            <View key={index} style={styles.savedGoalContainer}>
+              <TouchableOpacity style={styles.goalCard} >
+          
+                <Text style={styles.goalName}>{goal.plan_name} </Text>
+                <Ionicons name="play-circle" size={24} color="#CA9329" style={styles.playButton} />
+              </TouchableOpacity>
+            </View>
+          ))}
+        </ScrollView>
+      )}
     </View>
   );
 };
@@ -106,12 +105,10 @@ const styles = StyleSheet.create({
     paddingTop: 40,
   },
   header: {
-    
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'left',
-    marginBottom: 20, // Adjusted marginBottom to move header down
-    backgroundColor:'#000',
+    marginBottom: 20,
+    backgroundColor: '#000',
   },
   heading: {
     fontSize: 20,
@@ -128,34 +125,46 @@ const styles = StyleSheet.create({
   searchInput: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#333333', // Blackish grey
-    borderRadius: 30, // Adjust the border radius to make it more rounded
+    backgroundColor: '#333333',
+    borderRadius: 30,
     paddingHorizontal: 10,
-    paddingVertical: 15, // Increase the vertical padding to make it taller
+    paddingVertical: 15,
     flex: 1,
-    justifyContent: 'space-between', // Align the search and filter icons to the right
+    justifyContent: 'space-between',
   },
   input: {
     flex: 1,
     marginLeft: 10,
-    color: 'white', // Set text color to white
+    color: 'white',
   },
   plusIconContainer: {
-    marginLeft: 10, // Adjust spacing between search input and plus icon
-    
+    marginLeft: 10,
   },
-  blackishGreySection: {
+  loadingIndicator: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  goalContainer: {
+    flex: 1,
+  },
+  savedGoalContainer: {
+    marginBottom: 10,
+  },
+  goalCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#333333',
     borderRadius: 10,
     padding: 20,
-  
-  },
-  savedGoalContainer: {
-    marginBottom: 10, // Adjust as needed
   },
   goalName: {
     fontSize: 18,
-    color: 'white',
+    color: '#CA9329',
+    marginRight: 10, // Add some spacing between the goal name and the play button
+  },
+  playButton: {
+    marginLeft: 'auto', // Align the play button to the right edge of the card
   },
 });
 

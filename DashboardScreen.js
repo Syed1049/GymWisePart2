@@ -29,6 +29,7 @@ const DashboardScreen = () => {
 
   // Function to handle navigation on button press
   const handleNavigation = (screen) => {
+    console.log("screen", screen);
     navigation.navigate(screen); // Using the navigate function with the screen name
   };
 
@@ -45,7 +46,7 @@ const DashboardScreen = () => {
             break;
             
             case 'Trainers':
-              screenName = 'TrainersPage';
+              screenName = 'Trainers';
               break;
             case 'Schedules':
               screenName = 'UpcomingBookingsPage';

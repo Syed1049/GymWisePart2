@@ -1,7 +1,19 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, SafeAreaView, Modal, Button, Animated, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  Image,
+  SafeAreaView,
+  Button,
+  Animated,
+  Modal,
+  Alert,
+} from 'react-native';
+import { CardField, useConfirmPayment } from '@stripe/stripe-react-native';
 
-// Mock data for gym items
 const GYM_ITEMS = [
   { id: '1', name: 'Yoga Mat', price: 19.99, image: { uri: 'https://via.placeholder.com/100' } },
   { id: '2', name: 'Dumbbell Set', price: 35.99, image: { uri: 'https://via.placeholder.com/100' } },
@@ -15,23 +27,57 @@ const GYM_ITEMS = [
 const StorePage = () => {
   const [cart, setCart] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
-  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const [showPaymentOptions, setShowPaymentOptions] = useState(false);
+  const fadeAnim = useRef(new Animated.Value(1)).current;
+  const paymentOptionsY = useRef(new Animated.Value(1000)).current; // Start off-screen
+  const { confirmPayment, loading } = useConfirmPayment();
 
   const addToCart = (item) => {
     setCart([...cart, item]);
   };
 
+  const handlePayPress = async () => {
+    const billingDetails = {
+      email: 'jenny.rosen@example.com',
+    };
+
+    const clientSecret = await fetchPaymentIntentClientSecret();
+
+    const { paymentIntent, error } = await confirmPayment(clientSecret, {
+      paymentMethodType: 'Card',
+      paymentMethodData: {
+        billingDetails,
+      },
+    });
+
+    if (error) {
+      console.log('Payment confirmation error', error);
+    } else if (paymentIntent) {
+      console.log('Success from promise', paymentIntent);
+    }
+  };
+
   const openCart = () => {
     setModalVisible(true);
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 500,
-      useNativeDriver: true
-    }).start();
   };
 
   const getSubtotal = () => {
     return cart.reduce((acc, item) => acc + item.price, 0).toFixed(2);
+  };
+
+  const buyNow = () => {
+    setModalVisible(false);
+    setShowPaymentOptions(true);
+    Animated.timing(fadeAnim, {
+      toValue: 0.4,
+      duration: 500,
+      useNativeDriver: true,
+    }).start();
+    Animated.spring(paymentOptionsY, {
+      toValue: 0,
+      useNativeDriver: true,
+      bounciness: 5,
+    }).start();
   };
 
   const renderItem = ({ item }) => (
@@ -63,38 +109,43 @@ const StorePage = () => {
         animationType="slide"
         transparent={true}
         visible={modalVisible}
-        onRequestClose={() => {
-          Animated.timing(fadeAnim, {
-            toValue: 0,
-            duration: 300,
-            useNativeDriver: true
-          }).start(() => setModalVisible(!modalVisible));
-        }}
+        onRequestClose={() => setModalVisible(false)}
       >
         <View style={styles.centeredView}>
-          <Animated.View style={[styles.modalView, {opacity: fadeAnim}]}>
+          <View style={styles.modalView}>
             <Text style={styles.modalText}>Cart Subtotal: ${getSubtotal()}</Text>
-            <Button
-              title="Buy Now"
-              onPress={() => {
-                Alert.alert('Purchase', 'Total purchase: $' + getSubtotal(), [{ text: 'OK' }]);
-                setCart([]);  // Clear cart after purchase
-                setModalVisible(false);
-              }}
-            />
-            <Button
-              title="Close Cart"
-              onPress={() => {
-                Animated.timing(fadeAnim, {
-                  toValue: 0,
-                  duration: 300,
-                  useNativeDriver: true
-                }).start(() => setModalVisible(!modalVisible));
-              }}
-            />
-          </Animated.View>
+            <Button title="Buy Now" onPress={buyNow} />
+            <Button title="Close Cart" onPress={() => setModalVisible(false)} />
+          </View>
         </View>
       </Modal>
+      {showPaymentOptions && (
+        <Animated.View style={[styles.paymentOptionsContainer, { transform: [{ translateY: paymentOptionsY }] }]}>
+          <CardField
+            postalCodeEnabled={true}
+            placeholders={{ number: '4242 4242 4242 4242' }}
+            cardStyle={{
+              backgroundColor: '#FFFFFF',
+              textColor: '#000000',
+            }}
+            style={{
+              width: '100%',
+              height: 200,
+              display: 'flex',
+              // gap: '20',
+              flexDirection: 'column',
+              marginVertical: 10,
+            }}
+            onCardChange={cardDetails => {
+              console.log('cardDetails', cardDetails);
+            }}
+            onFocus={focusedField => {
+              console.log('focusField', focusedField);
+            }}
+          />
+          <Button onPress={handlePayPress} title="Pay" disabled={loading} />
+        </Animated.View>
+      )}
     </SafeAreaView>
   );
 };
@@ -103,6 +154,24 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'black',
+  },
+  paymentOptionsContainer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#FFFFFF',
+    padding: 20,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: -2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 5,
   },
   pageTitle: {
     fontSize: 24,

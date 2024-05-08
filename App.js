@@ -38,7 +38,8 @@ import Plans from './Plans';
 import ProfileScreen from './profileScreen';
 import RecentActivityPage from './RecentActivityPage';
 import SelectDateAndSlot from './SelectDateAndSlot';
-
+import Payment from './payment';
+import TrainersModule from './TrainersModule';
 
 const Stack = createStackNavigator();
 export default function App()  {
@@ -82,9 +83,11 @@ export default function App()  {
           <Stack.Screen name="TutorialHome" component={TutorialHome}/>
           <Stack.Screen name="BodyPartVideosScreen" component={BodyPartVideosScreen} />
           <Stack.Screen name= "AdminLoginScreen" component={AdminLoginScreen}/>
-          <Stack.Screen name= "Store" component={Store}/>
+          <Stack.Screen name= "Store" component={Payment}/>
           <Stack.Screen name= "MemberSupportScreen" component={MemberSupportScreen}/>
           <Stack.Screen name= "UserDashboard" component={UserDashboard}/>
+          
+          <Stack.Screen name= "Trainers" component={TrainersModule}/>
           <Stack.Screen name="Newhome" component={NewHome} options={{ headerShown: false }} />
           <Stack.Screen name="SignUpScreen" component={SignUpScreen} options={{ headerShown: false }} />
           <Stack.Screen name="UpcomingBookingsPage" component={UpcomingBookingsPage} options={{ headerShown: false }} />

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,55 +11,12 @@ import {
   Animated,
   Modal,
   Alert,
-} from "react-native";
+} from 'react-native';
 import {CardField, useConfirmPayment} from '@stripe/stripe-react-native';
-
-const GYM_ITEMS = [
-  {
-    id: "1",
-    name: "Yoga Mat",
-    price: 19.99,
-    image: { uri: "https://via.placeholder.com/100" },
-  },
-  {
-    id: "2",
-    name: "Dumbbell Set",
-    price: 35.99,
-    image: { uri: "https://via.placeholder.com/100" },
-  },
-  {
-    id: "3",
-    name: "Resistance Bands",
-    price: 9.99,
-    image: { uri: "https://via.placeholder.com/100" },
-  },
-  {
-    id: "4",
-    name: "Kettlebell",
-    price: 25.99,
-    image: { uri: "https://via.placeholder.com/100" },
-  },
-  {
-    id: "5",
-    name: "Foam Roller",
-    price: 15.99,
-    image: { uri: "https://via.placeholder.com/100" },
-  },
-  {
-    id: "6",
-    name: "Skipping Rope",
-    price: 9.99,
-    image: { uri: "https://via.placeholder.com/100" },
-  },
-  {
-    id: "7",
-    name: "Punching Bag",
-    price: 120.99,
-    image: { uri: "https://via.placeholder.com/100" },
-  },
-];
+import { supabase } from './supabase'; // Ensure this is correctly imported
 
 const StorePage = () => {
+  const [items, setItems] = useState([]);
   const [cart, setCart] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [cardData, setCardData] = useState();
@@ -68,34 +25,36 @@ const StorePage = () => {
   const paymentOptionsY = useRef(new Animated.Value(1000)).current; // Start off-screen
   const { confirmPayment, loading } = useConfirmPayment();
 
-  const addToCart = (item) => {
-    setCart([...cart, item]);
+  useEffect(() => {
+    fetchStoreItems();
+  }, []);
+
+  const fetchStoreItems = async () => {
+    const { data, error } = await supabase.from('store').select('*');
+      console.log(data,"tg5yt5");
+    if (error) {
+      Alert.alert('Error fetching store items', error.message);
+    } else {
+      setItems(data);
+    }
   };
 
-  const fetchPaymentIntentClientSecret = async () => {
-
+  const addToCart = (item) => {
+    setCart([...cart, item]);
   };
 
   const handlePayPress = async () => {
     const billingDetails = {
       email: "123@gmail.com",
     };
-  
-   console.log(cardData);
-   if(cardData?.expiryYear != null && cardData?.validCVC != 'Incomplete'){
-    setShowPaymentOptions(false)
-    alert('Payment Success')
-    setCardData(null)
-   }
-   else{
-    alert('Enter valid card data')
-   }
 
-
-    if (error) {
-      console.log("Payment confirmation error", error);
-    } else if (paymentIntent) {
-      console.log("Success from promise", paymentIntent);
+    console.log(cardData);
+    if (cardData?.expiryYear != null && cardData?.validCVC != 'Incomplete') {
+      setShowPaymentOptions(false)
+      Alert.alert('Payment Success');
+      setCardData(null)
+    } else {
+      Alert.alert('Invalid Card Data', 'Enter valid card data');
     }
   };
 
@@ -124,8 +83,8 @@ const StorePage = () => {
 
   const renderItem = ({ item }) => (
     <TouchableOpacity style={styles.itemContainer}>
-      <Image source={item.image} style={styles.itemImage} />
-      <Text style={styles.itemName}>{item.name}</Text>
+      <Image source={{ uri: item.image }} style={styles.itemImage} />
+      <Text style={styles.itemName}>{item.item_name}</Text>
       <Text style={styles.itemPrice}>${item.price}</Text>
       <TouchableOpacity
         style={styles.buyButton}
@@ -140,9 +99,9 @@ const StorePage = () => {
     <SafeAreaView style={styles.container}>
       <Text style={styles.pageTitle}>Gym Store</Text>
       <FlatList
-        data={GYM_ITEMS}
+        data={items}
         renderItem={renderItem}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.id.toString()}
         numColumns={2}
         contentContainerStyle={styles.listContainer}
         columnWrapperStyle={styles.columnWrapper}
@@ -173,31 +132,27 @@ const StorePage = () => {
             { transform: [{ translateY: paymentOptionsY }] },
           ]}
         >
-    <View style={styles.container}>
-      <View style={styles.inputContainer}>
-        <CardField
-          postalCodeEnabled={true}
-          placeholders={{
-            number: '4242 4242 4242 4242',
-          }}
-          cardStyle={{
-            backgroundColor: '#FFFFFF',
-            textColor: '#000000',
-            borderColor: 'black'
-          }}
-          style={styles.cardField}
-          onCardChange={(cardDetails) => {
-            setCardData(cardDetails)
-          }}
-          onFocus={(focusedField) => {
-            console.log('focusField', focusedField);
-          }}
-        />
-      </View>
-      <View style={styles.buttonContainer}>
-        <Button onPress={handlePayPress} title="Pay" />
-      </View>
-    </View>
+          <View style={styles.inputContainer}>
+            <CardField
+              postalCodeEnabled={true}
+              placeholders={{ number: '4242 4242 4242 4242', }}
+              cardStyle={{
+                backgroundColor: '#FFFFFF',
+                textColor: '#000000',
+                borderColor: 'black'
+              }}
+              style={styles.cardField}
+              onCardChange={(cardDetails) => {
+                setCardData(cardDetails)
+              }}
+              onFocus={(focusedField) => {
+                console.log('focusField', focusedField);
+              }}
+            />
+          </View>
+          <View style={styles.buttonContainer}>
+            <Button onPress={handlePayPress} title="Pay" />
+          </View>
         </Animated.View>
       )}
     </SafeAreaView>

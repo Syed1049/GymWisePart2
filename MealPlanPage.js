@@ -8,7 +8,8 @@ import {
   ActivityIndicator,
   ScrollView,
   Image,
-  Linking,TouchableOpacity
+  TouchableOpacity,
+  Linking
 } from "react-native";
 
 const MealPlanPage = ({ apiKey }) => {
@@ -35,9 +36,8 @@ const MealPlanPage = ({ apiKey }) => {
         }
       );
       const data = await response.json();
-      console.log("meal plane data", data);
       if (response.ok) {
-        setMealPlans(data); // Append new plan to existing array
+        setMealPlans(data);
       } else {
         throw new Error(data.message || "Unable to fetch data");
       }
@@ -47,7 +47,7 @@ const MealPlanPage = ({ apiKey }) => {
       setIsLoading(false);
     }
   };
-  console.log(mealPlans);
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Generate Daily Meal Plan</Text>
@@ -70,60 +70,48 @@ const MealPlanPage = ({ apiKey }) => {
         onChangeText={setExclude}
         placeholder="Exclude (e.g., shellfish, olives)"
       />
-      <View style={{ borderRadius: 20, overflow: "hidden" }}>
+      <View style={styles.buttonContainer}>
         <Button
           title="Generate Meal Plan"
           onPress={fetchMealPlan}
           color="orange"
         />
       </View>
-      {isLoading && <ActivityIndicator size="large" color="white" />}
+      {isLoading && <ActivityIndicator size="large" color="#FFF" />}
       {error && <Text style={styles.error}>{error}</Text>}
       {mealPlans && (
         <ScrollView style={styles.mealPlanContainer}>
-          {mealPlans &&
-            Object.entries(mealPlans?.week).map(([day, dayPlan], index) => (
-              <View key={index} style={styles.planItem}>
-                <Text style={{ color: "white" }}>Meals for {day}:</Text>
-                {dayPlan.meals.map((meal) => (
-                  <View key={meal.id} style={styles.mealItem}>
-                    <Text style={{ color: "white" }}>{meal.title}</Text>
-                    <Image
-                      style={styles.mealImage}
-                      source={{
-                        uri: `https://spoonacular.com/recipeImages/${meal.id}-240x150.${meal.imageType}`,
-                      }}
-                    />
-                    <Text style={{ color: "white" }}>
-                      Ready in: {meal.readyInMinutes} minutes
-                    </Text>
-                    <Text style={{ color: "white" }}>
-                      Servings: {meal.servings}
-                    </Text>
+          {mealPlans.week && Object.entries(mealPlans.week).map(([day, dayPlan], index) => (
+            <View key={index} style={styles.dayContainer}>
+              <Text style={styles.dayTitle}>Meals for {day.charAt(0).toUpperCase() + day.slice(1)}:</Text>
+              {dayPlan.meals.map((meal) => (
+                <View key={meal.id} style={styles.mealItem}>
+                  <Image
+                    style={styles.mealImage}
+                    source={{ uri: `https://spoonacular.com/recipeImages/${meal.id}-240x150.${meal.imageType}` }}
+                  />
+                  <View style={styles.mealDetailContainer}>
+                    <Text style={styles.mealTitle}>{meal.title}</Text>
+                    <Text style={styles.mealInfo}>Ready in: {meal.readyInMinutes} minutes</Text>
+                    <Text style={styles.mealInfo}>Servings: {meal.servings}</Text>
                     <TouchableOpacity
-                      style={{
-                        backgroundColor: "blue",
-                        borderRadius: 20,
-                        padding: 10,
-                        alignItems: "center",
-                      }}
+                      style={styles.recipeButton}
                       onPress={() => Linking.openURL(meal.sourceUrl)}
                     >
-                      <Text style={{ color: "white" }}>View Recipe</Text>
+                      <Text style={styles.buttonText}>View Recipe</Text>
                     </TouchableOpacity>
                   </View>
-                ))}
-                <View style={styles.nutrientsContainer}>
-                  <Text style={styles.nutrientsTitle}>Total Nutrients:</Text>
-                  <Text>Calories: {dayPlan.nutrients.calories.toFixed(2)}</Text>
-                  <Text>
-                    Carbohydrates: {dayPlan.nutrients.carbohydrates.toFixed(2)}g
-                  </Text>
-                  <Text>Fat: {dayPlan.nutrients.fat.toFixed(2)}g</Text>
-                  <Text>Protein: {dayPlan.nutrients.protein.toFixed(2)}g</Text>
                 </View>
+              ))}
+              <View style={styles.nutrientsContainer}>
+                <Text style={styles.nutrientsTitle}>Total Nutrients for {day}:</Text>
+                <Text style={styles.nutrientText}>Calories: {dayPlan.nutrients.calories.toFixed(2)}</Text>
+                <Text style={styles.nutrientText}>Carbohydrates: {dayPlan.nutrients.carbohydrates.toFixed(2)}g</Text>
+                <Text style={styles.nutrientText}>Fat: {dayPlan.nutrients.fat.toFixed(2)}g</Text>
+                <Text style={styles.nutrientText}>Protein: {dayPlan.nutrients.protein.toFixed(2)}g</Text>
               </View>
-            ))}
+            </View>
+          ))}
         </ScrollView>
       )}
     </View>
@@ -133,42 +121,92 @@ const MealPlanPage = ({ apiKey }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "black", // Background color black
+    backgroundColor: "black",
     padding: 20,
   },
   title: {
     fontSize: 20,
     fontWeight: "bold",
+    color: "white",
     marginBottom: 10,
-    color: "white", // Text color white
   },
   input: {
     height: 40,
-    backgroundColor: "grey", // Background color grey
+    backgroundColor: "grey",
+    color: "white",
     marginBottom: 10,
     padding: 10,
-    borderRadius: 20, // Border radius
-    color: "white", // Text color white
+    borderRadius: 20,
   },
   mealPlanContainer: {
     marginTop: 20,
-    backgroundColor: "black",
   },
-  mealImage: {
-    width: 240,
-    height: 150,
+  dayContainer: {
+    marginBottom: 30,
+  },
+  dayTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: 'white',
     marginBottom: 10,
   },
-  mealImage: {
-    width: 240,
-    height: 150,
+  mealItem: {
+    flexDirection: 'row',
+    backgroundColor: '#555',
+    borderRadius: 10,
     marginBottom: 10,
+    overflow: 'hidden',
+  },
+  mealImage: {
+    width: 100,
+    height: 'auto',
+  },
+  mealDetailContainer: {
+    flex: 1,
+    padding: 10,
   },
   mealTitle: {
-    fontSize: 14,
-    fontWeight: "bold",
-    color: "white", // Text color white
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: 'white',
   },
+  mealInfo: {
+    color: 'white',
+  },
+  recipeButton: {
+    marginTop: 10,
+    backgroundColor: "blue",
+    borderRadius: 20,
+    padding: 10,
+    alignItems: "center",
+  },
+  buttonText: {
+    color: "white",
+  },
+  nutrientsContainer: {
+    padding: 10,
+    backgroundColor: "#333",
+    borderRadius: 10,
+    marginTop: 10,
+  },
+  nutrientsTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: 'white',
+    marginBottom: 5,
+  },
+  nutrientText: {
+    color: 'white',
+  },
+  error: {
+    color: 'red',
+    fontSize: 14,
+    marginTop: 10,
+  },
+  buttonContainer: {
+    borderRadius: 20,
+    overflow: "hidden",
+  }
 });
 
 export default MealPlanPage;

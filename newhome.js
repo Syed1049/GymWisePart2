@@ -37,6 +37,7 @@ const NewHome = () => {
         <TouchableOpacity
           style={[styles.roleButton, selectedRole === 'Admin' && styles.selectedButton]}
           onPress={() => handleRoleSelect('Admin')}
+          
         >
           <Text style={styles.buttonText}>Admin</Text>
         </TouchableOpacity>
@@ -48,6 +49,14 @@ const NewHome = () => {
             if (selectedRole === 'Member') {
               navigation.navigate('SignUpScreen');
             }
+            if (selectedRole === 'Admin') {
+              navigation.navigate('AdminLoginScreen');
+            }
+            if (selectedRole === 'Trainer') {
+              navigation.navigate('TrainerSignUpScreen');
+            }
+             
+
           }}
         >
           <Text style={styles.buttonText}>Sign Up</Text>
@@ -57,7 +66,14 @@ const NewHome = () => {
               navigation.navigate('SignInScreen');
        
             }
-          }}>
+            if (selectedRole === 'Trainer') {
+              navigation.navigate('TrainerSignInScreen');
+       
+            }
+          }
+          
+          }>
+          
           <Text style={styles.buttonText}>Sign In</Text>
           
         </TouchableOpacity>

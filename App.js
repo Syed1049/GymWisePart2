@@ -14,6 +14,9 @@ import AdminLoginScreen from './AdminLoginScreen';
 import MemberSupportScreen from './MemberSupportScreen';
 import UserDashboard from './UserDashboard';
 import Store from './Store';
+import TrainerSignUpScreen from './TrainerSignUpScreen';
+import TrainerSignInScreen from './TrainerSignInScreen';
+import TrainerDashboardScreen from './TrainerDashboardScreen';
 import SignInScreen from './SignInScreen';
 import SignUpScreen from './SignUpScreen';
 import BookingPage from './BookingPage';
@@ -26,6 +29,20 @@ import GoalsScreen from './GoalsScreen';
 import MuscleGroupsScreen from './MuscleGroupsScreen';
 import DashboardScreen from './DashboardScreen';
 import PlanDetailsScreen from './PlanDetailsScreen';
+import AdminDashboard from './AdminDashboard';
+import AddEquipmentScreen from './AddEquipmentScreen';
+import UpdateAvailabilityScreen from './UpdateAvailabilityScreen';
+import ManageEquipmentScreen from './ManageEquipmentScreen';
+import EquipmentHomeScreen from './EquipmentHomeScreen';
+import UpdatedGoalsDetailsScreen from './UpdatedGoalsDetailsScreen';
+import CourseCreationScreen from './CourseCreationScreen';
+import SetAvailableHoursScreen from './SetAvailbleHoursScreen';
+import CoursesScreen from './CoursesScreen';
+import CourseDetailsScreen from './CourseDetailsScreen';
+import SessionsScreen from './SessionsScreen';
+import TrainerListScreen from './TrainerListScreen';
+import TrainerDetailsScreen from './TrainerDetailsScreen';
+import CustomGoalScreen from './CustomGoalScreen';
 import TrainerPage from './TrainerPage';
 import BMI from './BMI';
 import FitnessDashboard from './FitnessDashboard';
@@ -75,7 +92,19 @@ export default function App()  {
       <Stack.Navigator initialRouteName="Tutorial">
       <Stack.Screen name=" " component={NewHome} 
         options={{headerShown:false}}
-      />
+
+      /> 
+       <Stack.Screen name="TrainerSignUpScreen" component={TrainerSignUpScreen}  options={{ headerShown: false }}/>
+       <Stack.Screen name="SessionsScreen" component={SessionsScreen}  options={{ headerShown: false }}/>
+       <Stack.Screen name="TrainerSignInScreen" component={TrainerSignInScreen}  options={{ headerShown: false }}/>
+       <Stack.Screen name="CourseCreationScreen" component={CourseCreationScreen}  options={{ headerShown: false }}/>
+       <Stack.Screen name="TrainerDashboardScreen" component={TrainerDashboardScreen}  options={{ headerShown: false }}/>
+       <Stack.Screen name="SetAvailableHoursScreen" component={SetAvailableHoursScreen}  options={{ headerShown: false }}/>
+       <Stack.Screen name="CoursesScreen" component={CoursesScreen}  options={{ headerShown: false }}/>
+       <Stack.Screen name="CourseDetailsScreen" component={CourseDetailsScreen}  options={{ headerShown: false }}/>
+       <Stack.Screen name="TrainerListScreen" component={TrainerListScreen}  options={{ headerShown: false }}/>
+       <Stack.Screen name="TrainerDetailsScreen" component={TrainerDetailsScreen}  options={{ headerShown: false }}/>
+       <Stack.Screen name="CustomGoalScreen" component={CustomGoalScreen}  options={{ headerShown: false }}/>
           <Stack.Screen name="BodyPartScreen" component={BodyPartScreen} />
           <Stack.Screen name="TutorialScreen" component={TutorialScreen} />
           <Stack.Screen name="LoginScreen" component={LoginScreen}/>
@@ -95,9 +124,16 @@ export default function App()  {
           <Stack.Screen name="FitnessDashboard" component={FitnessDashboard}  />
           <Stack.Screen name="WorkoutPlanScreen" component={WorkoutPlanScreen} />
           <Stack.Screen name="DashboardScreen" component={DashboardScreen} options={{headerShown:false}} />
+          <Stack.Screen name="AdminDashboard" component={AdminDashboard} options={{headerShown:false}} />
+          <Stack.Screen name="AddEquipmentScreen" component={AddEquipmentScreen} options={{headerShown:false}} />
           <Stack.Screen name="GoalsScreen" component={GoalsScreen}  options={{ headerShown: false }}/>
           <Stack.Screen name="PlanDetailsScreen" component={PlanDetailsScreen}  options={{ headerShown: false }}/>
           <Stack.Screen name="MuscleGroupsScreen" component={MuscleGroupsScreen}  options={{ headerShown: false }}/>
+          <Stack.Screen name="UpdateAvailabilityScreen" component={UpdateAvailabilityScreen}  options={{ headerShown: false }}/>
+          <Stack.Screen name="ManageEquipmentScreen" component={ManageEquipmentScreen}  options={{ headerShown: false }}/>
+          <Stack.Screen name="EquipmentHomeScreen" component={EquipmentHomeScreen}  options={{ headerShown: false }}/>
+          <Stack.Screen name="UpdatedGoalsDetailsScreen" component={UpdatedGoalsDetailsScreen}  options={{ headerShown: false }}/>
+   
           {/* <Stack.Screen name="TrainerPage" component={TrainerPage} />
 <Stack.Screen name="BMI" component={BMI} />
 <Stack.Screen name="FitnessDashboard" component={FitnessDashboard} />

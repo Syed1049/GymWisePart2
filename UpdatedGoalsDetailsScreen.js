@@ -1,138 +1,59 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert,Modal,TextInput } from 'react-native';
-import RNPickerSelect from 'react-native-picker-select';
-import { useNavigation } from '@react-navigation/native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, TextInput } from 'react-native';
 import RNDateTimePicker from '@react-native-community/datetimepicker';
+import { useNavigation } from '@react-navigation/native';
 import { supabase } from './supabase';
 import { getUserSession } from './SessionService';
-const GoalDetailsScreen = () => {
+
+const UpdatedGoalsDetailsScreen = () => {
   const [selectedTimeLimit, setSelectedTimeLimit] = useState('');
   const [selectedBodySection, setSelectedBodySection] = useState('');
   const [selectedFitnessLevel, setSelectedFitnessLevel] = useState('');
-  const [recommendedExercises, setRecommendedExercises] = useState([]); // State to hold recommended exercises
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
   const [goalName, setGoalName] = useState('');
-  const [userId, setUserId] = useState(null); // State to hold the user ID
-  const [planId,setPlanId]=useState();
+  const [userId, setUserId] = useState(null);
   const navigation = useNavigation();
-   
-  useEffect(() => {
-    fetchUserSession(); // Fetch user session when component mounts
-  }, []); 
-  const handleSubmit = async () => {
 
-     const timeLimit = parseInt(selectedTimeLimit);
-      let fitnessLevelcopy = selectedFitnessLevel;
-      const bodySection = selectedBodySection;
-  
- 
+  useEffect(() => {
+    fetchUserSession();
+  }, []);
+
+  const handleSubmit = async () => {
+    const timeLimit = parseInt(selectedTimeLimit);
+    const bodySection = selectedBodySection;
+    const fitnessLevel = selectedFitnessLevel;
+
     try {
- 
-  
-      let exercises = [];
-  
-      // Use a temporary variable to track fitness level adjustments
-   
-  
-      // // Loop until exercises are found or all fitness levels are exhausted
-      // do {
-      //   exercises = await fetchExercises(bodySection, fitnessLevelcopy);
-      //   fitnessLevelcopy = getNextFitnessLevel(fitnessLevelcopy, false); // Move down a level after each iteration
-      // } while (exercises.length === 0 && fitnessLevelcopy !== null);
-  
-      // if (exercises.length === 0) {
-      //   throw new Error('No exercises available for any fitness level');
-      // }
-      do {
-        exercises = await fetchExercises(bodySection, fitnessLevelcopy);
-        
-        // If no exercises are found for the current fitness level, decrement the fitness level
-        if (exercises.length === 0 && fitnessLevelcopy !== null) {
-          fitnessLevelcopy = getNextFitnessLevel(fitnessLevelcopy, false); // Move down a level
-        }
-      } while (exercises.length === 0 && fitnessLevelcopy !== null);
-      
+      const exercises = await fetchExercises(bodySection, fitnessLevel);
       if (exercises.length === 0) {
-        throw new Error('No exercises available for any fitness level');
+        throw new Error('No exercises available for the selected fitness level and body section');
       }
-        
-      const recommended = await recommendExercises(exercises, timeLimit, fitnessLevelcopy);
-      setRecommendedExercises(recommended);
-  
-      console.log('Recommended Exercises:', recommendedExercises);
-      
-  
-      navigation.navigate('WorkoutPlanScreen', { recommendedExercises });
-  
+      const recommendedExercises = recommendExercises(exercises, timeLimit, fitnessLevel);
+      saveWorkoutPlanAndExercises(recommendedExercises);
     } catch (error) {
       console.error(error);
       Alert.alert('Error', error.message || 'Failed to generate workout plan. Please try again.');
     }
-  
-    const workoutPlanData = {
-      plan_name: goalName,
-      plan_start_date: selectedDate,
-      plan_end_date: selectedDate,
-      duration_minutes: parseInt(selectedTimeLimit),
-      user_id: userId, // Using the fetched user ID
-    };
-   
- 
-    // const planId = await saveWorkoutPlan(workoutPlanData);
-    // console.log(planId);
-    // await saveRecommendedExercises(recommendedExercises,planId );
-    // // After getting the plan ID, save recommended exercises
-    try {
-      const planId = await saveWorkoutPlan(workoutPlanData);
-      console.log(planId);
-      await saveRecommendedExercises(recommendedExercises, planId);
-      // After getting the plan ID, save recommended exercises
-    } catch (error) {
-      console.error('Error saving workout plan or recommended exercises:', error);
-      // Handle the error appropriately, such as showing an error message to the user
-    }
-    
-  };
-  
-
-
-  const getNextFitnessLevel = (currentLevel, isUp) => {
-    const levels = ['Beginner', 'Intermediate', 'Advanced'];
-    const currentIndex = levels.indexOf(currentLevel);
-    if (isUp && currentIndex < levels.length - 1) {
-      return levels[currentIndex + 1];
-    } else if (!isUp && currentIndex > 0) {
-      return levels[currentIndex - 1];
-    }
-    return null; // Return null if there are no more levels in the specified direction
   };
 
   const fetchExercises = async (bodySection, fitnessLevel) => {
-    // console.log('Fetching exercises for fitness level:', fitnessLevel);
     try {
       const { data, error } = await supabase
         .from('exercise_goals')
         .select('*')
         .eq('exercise_bodysection', bodySection)
         .eq('exercise_level', fitnessLevel)
-   
         .order('exercise_title', { ascending: true });
 
       if (error) {
         throw new Error(error.message);
       }
 
-      if (data && data.length > 0) {
-        // console.log(data);
-        return data;
-        
-      } else {
-        return [];
-      }
+      return data || [];
     } catch (error) {
       throw new Error('Failed to fetch exercises from the database');
-    }};
+    }
+  };
 
   const recommendExercises = (exercises, timeLimit, fitnessLevel) => {
     console.log(fitnessLevel);
@@ -180,13 +101,6 @@ const GoalDetailsScreen = () => {
     }
   };
 
-  // Function to handle date selection
-  const handleDateChange = (event, selectedDate) => {
-    const currentDate = selectedDate || date;
-    setShowDatePicker(false);
-    setSelectedDate(currentDate);
-  };
-
   const fetchUserSession = async () => {
     try {
       const session = await getUserSession();
@@ -198,131 +112,49 @@ const GoalDetailsScreen = () => {
     }
   };
 
-  const saveWorkoutPlan = async (workoutPlanData) => {
+  const saveWorkoutPlanAndExercises = async (recommendedExercises) => {
     try {
-      // Insert the workout plan data into the database table named 'workoutplans'
-      const { error } = await supabase.from('workoutplans').insert([workoutPlanData]);
-  
-      if (error) {
-        throw new Error(error.message);
+      const planData = {
+        plan_name: goalName,
+        plan_start_date: selectedDate,
+        plan_end_date: selectedDate,
+        duration_minutes: parseInt(selectedTimeLimit),
+        user_id: userId,
+      };
+      const { data: planInsertData, error: planInsertError } = await supabase.from('workoutplans').insert([planData]);
+      if (planInsertError) {
+        throw new Error(planInsertError.message);
       }
-  
-      console.log('Workout plan saved successfully');
-  
-      // Fetch the maximum plan ID from the workoutplans table
-      const { data: latestPlanIdData, error: fetchError } = await supabase
-        .from('workoutplans')
-        .select('plan_id')
-        .order('plan_id', { ascending: false })
-        .limit(1);
-  
-      if (fetchError) {
-        throw new Error(fetchError.message);
+      const planId = planInsertData[0].plan_id;
+
+      const exercisesData = recommendedExercises.map(exercise => ({
+        exercise_id: exercise.id,
+        plan_id: planId,
+        exercise_name: exercise.name,
+        description: exercise.desc,
+        exercise_body_part: exercise.bodysection,
+        exercise_equipment: exercise.equipment,
+        reps: exercise.reps,
+        sets: exercise.sets,
+      }));
+
+      const { error: exercisesInsertError } = await supabase.from('exercisesinplan').insert(exercisesData);
+      if (exercisesInsertError) {
+        throw new Error(exercisesInsertError.message);
       }
-  
-      const planId = latestPlanIdData[0].plan_id;
-  
-      console.log('Latest plan ID:', planId);
-  
-      // Return the plan ID
-      return planId;
-      
+
+      console.log('Workout plan and recommended exercises saved successfully');
+      navigation.navigate('WorkoutPlanScreen', { recommendedExercises });
     } catch (error) {
-      throw new Error('Failed to save workout plan to the database');
+      console.error('Error saving workout plan or recommended exercises:', error);
+      Alert.alert('Error', 'Failed to save workout plan or recommended exercises. Please try again.');
     }
   };
-  
-  // const saveWorkoutPlan = async (workoutPlanData) => {
-  //   try {
-  //     // Insert the workout plan data into the database table named 'workoutplans'
-  //     const { error } = await supabase.from('workoutplans').insert([workoutPlanData]);
-  
-  //     if (error) {
-  //       throw new Error(error.message);
-  //     }
-  
-  //     console.log('Workout plan saved successfully');
 
-
-  //   if (fetchError) {
-  //     throw new Error(fetchError.message);
-  //   }
-
-  //   // Get the generated plan ID
-
-  //   } catch (error) {
-  //     throw new Error('Failed to save workout plan to the database');
-  //   }
-  // };
-  
-  // const saveRecommendedExercises = async (recommendedExercises, planId) => {
-  //   try {
-  //     // Create an array to hold promises for each insert operation
-  //     const insertPromises = recommendedExercises.map(async (exercise) => {
-  //       const { data, error } = await supabase.from('exercisesinplan').insert({
-  //         exercise_id: exercise.id,
-  //         plan_id: planId,
-  //         exercise_name: exercise.name,
-  //         description: exercise.desc,
-  //         exercise_body_part: exercise.bodysection,
-  //         exercise_equipment: exercise.equipment,
-  //         reps: exercise.reps,
-  //         sets: exercise.sets,
-  //       });
-        
-  //       if (error) {
-  //         throw new Error(error.message);
-  //       }
-  
-  //       return data; // Return the inserted data if successful
-  //     });
-  
-  //     // Wait for all insert operations to complete
-  //     const insertedData = await Promise.all(insertPromises);
-  
-  //     console.log('Recommended exercises saved successfully');
-  //     return insertedData; // Return the inserted data if needed
-  //   } catch (error) {
-  //     throw new Error('Failed to save recommended exercises to the database');
-  //   }
-  // };
-  
-  const saveRecommendedExercises = async (recommendedExercises, planId) => {
-    try {
-      // Create an array to hold the objects for batch insertion
-      const exercisesToInsert = [];
-  
-      // Populate the array with exercise objects
-      recommendedExercises.forEach((exercise) => {
-        exercisesToInsert.push({
-          exercise_id: exercise.id,
-          plan_id: planId,
-          exercise_name: exercise.name,
-          description: exercise.desc,
-          exercise_body_part: exercise.bodysection,
-          exercise_equipment: exercise.equipment,
-          reps: exercise.reps,
-          sets: exercise.sets,
-        });
-      });
-  
-      // Perform the batch insert operation
-      const { data, error } = await supabase.from('exercisesinplan').insert(exercisesToInsert);
-  
-      // Check for errors in the batch insert operation
-      if (error) {
-        throw new Error(error.message);
-      }
-  
-      console.log('Recommended exercises saved successfully');
-      return data; // Return the inserted data if needed
-    } catch (error) {
-      throw new Error('Failed to save recommended exercises to the database');
-    }
+  const handleDateChange = (event, selectedDate) => {
+    const currentDate = selectedDate || date;
+    setSelectedDate(currentDate);
   };
-  
-
-
   return (
     <View style={styles.container}>
       <View style={styles.section}>
@@ -491,4 +323,4 @@ const styles = StyleSheet.create({
 
 });
 
-export default GoalDetailsScreen;
+export default UpdatedGoalsDetailsScreen;

@@ -47,7 +47,7 @@ const GoalsScreen = () => {
   };
 
   const handlePlusButtonPress = () => {
-    navigation.navigate('GoalDetailsScreen');
+    navigation.navigate('GoalDetails0.Screen');
   };
 
   const handlePlayButtonPress = (planId) => {
@@ -84,9 +84,10 @@ const GoalsScreen = () => {
         <ScrollView style={styles.goalContainer}>
           {savedGoals.map((goal, index) => (
             <View key={index} style={styles.savedGoalContainer}>
-              <TouchableOpacity style={styles.goalCard} >
+              <TouchableOpacity style={styles.goalCard}  onPress={() => handlePlayButtonPress(goal.plan_id)}>
           
                 <Text style={styles.goalName}>{goal.plan_name} </Text>
+              
                 <Ionicons name="play-circle" size={24} color="#CA9329" style={styles.playButton} />
               </TouchableOpacity>
             </View>

@@ -65,7 +65,7 @@ const EquipmentHomeScreen = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       <LinearGradient colors={['#000000', '#333333']} style={styles.gradientBackground}>
         <Animated.View style={[styles.header, { opacity: fadeAnim }]}>
-          <Ionicons name="ios-analytics" size={32} color="#CA9329" />
+          <Ionicons name="analytics" size={32} color="#CA9329" />
           <Text style={styles.headerText}>Equipment Statistics</Text>
         </Animated.View>
         <View style={styles.gridContainer}>

@@ -138,7 +138,7 @@ const DashboardScreen =  () => {
             break;
             
             case 'Trainers':
-              screenName = 'TrainersPage';
+              screenName = 'TrainerListScreen';
               break;
             case 'Schedules':
               screenName = 'UpcomingBookingsPage';

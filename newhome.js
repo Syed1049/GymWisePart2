@@ -28,12 +28,12 @@ const NewHome = () => {
       >
         <Text style={styles.buttonText}>Member</Text>
       </TouchableOpacity>
-        {/* <TouchableOpacity
+        <TouchableOpacity
           style={[styles.roleButton, selectedRole === 'Trainer' && styles.selectedButton]}
           onPress={() => handleRoleSelect('Trainer')}
         >
           <Text style={styles.buttonText}>Trainer</Text>
-        </TouchableOpacity> */}
+        </TouchableOpacity>
         <TouchableOpacity
           style={[styles.roleButton, selectedRole === 'Admin' && styles.selectedButton]}
           onPress={() => handleRoleSelect('Admin')}

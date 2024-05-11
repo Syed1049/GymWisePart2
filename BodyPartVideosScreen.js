@@ -21,7 +21,7 @@ const BodyPartVideosScreen = () => {
   const fetchData = async () => {
     try {
       const response = await axios.get('https://exercisedb.p.rapidapi.com/exercises', {
-        params: {
+        params: { 
           limit: 30,
           bodyPart: selectedBodyPart || undefined,
           name: searchQuery,

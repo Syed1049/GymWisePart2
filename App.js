@@ -55,8 +55,10 @@ import Plans from './Plans';
 import ProfileScreen from './profileScreen';
 import RecentActivityPage from './RecentActivityPage';
 import SelectDateAndSlot from './SelectDateAndSlot';
-
-
+import Payment from './payment';
+import TrainersModule from './TrainersModule';
+import MealPlanPage from './MealPlanPage';
+import MembershipPayment from './membershipPayment';
 const Stack = createStackNavigator();
 export default function App()  {
   return (
@@ -111,9 +113,13 @@ export default function App()  {
           <Stack.Screen name="TutorialHome" component={TutorialHome}/>
           <Stack.Screen name="BodyPartVideosScreen" component={BodyPartVideosScreen} />
           <Stack.Screen name= "AdminLoginScreen" component={AdminLoginScreen}/>
-          <Stack.Screen name= "Store" component={Store}/>
+          <Stack.Screen name= "Store" component={Payment}/>
+          <Stack.Screen name="MealPlanPage" component={MealPlanPage} />
           <Stack.Screen name= "MemberSupportScreen" component={MemberSupportScreen}/>
           <Stack.Screen name= "UserDashboard" component={UserDashboard}/>
+          <Stack.Screen name= "MembershipPage" component={MembershipPage}/>
+          
+          <Stack.Screen name= "Trainers" component={TrainersModule}/>
           <Stack.Screen name="Newhome" component={NewHome} options={{ headerShown: false }} />
           <Stack.Screen name="SignUpScreen" component={SignUpScreen} options={{ headerShown: false }} />
           <Stack.Screen name="UpcomingBookingsPage" component={UpcomingBookingsPage} options={{ headerShown: false }} />
@@ -121,6 +127,7 @@ export default function App()  {
           <Stack.Screen name="BookingPage" component={BookingPage} options={{ headerShown: false }} />
           <Stack.Screen name="TimePicker" component={TimePicker} />
           <Stack.Screen name="GoalDetailsScreen" component={GoalDetailsScreen}  />
+          <Stack.Screen name="MembershipPayment" component={MembershipPayment}  />
           <Stack.Screen name="FitnessDashboard" component={FitnessDashboard}  />
           <Stack.Screen name="WorkoutPlanScreen" component={WorkoutPlanScreen} />
           <Stack.Screen name="DashboardScreen" component={DashboardScreen} options={{headerShown:false}} />

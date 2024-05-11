@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, TextInput, Alert, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage'; 
 import { Button } from 'react-native-paper';
 import { supabase } from './supabase'; // Import your supabase instance
 import { saveUserSession } from './SessionService'; // Import your session service function
@@ -34,7 +35,7 @@ const SignInScreen = () => {
       // Fetch user data from the 'User' table based on email
       const { data: userData, error: userError } = await supabase
         .from('User')
-        .select('id, email, password') // Include other necessary fields
+        .select('id, email, password,membership') // Include other necessary fields
         .eq('email', email)
         .single();
   
@@ -48,6 +49,8 @@ const SignInScreen = () => {
         console.log('User logged in successfully:', userData);
   
         // Save user ID in the state
+        await AsyncStorage.setItem('userData', JSON.stringify(userData));
+        
         setUserId(userData.id);
         saveUserSession(userData.id); // Save user session
         // Navigate to the home screen or user dashboard

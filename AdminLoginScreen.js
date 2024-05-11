@@ -9,9 +9,9 @@ const AdminLoginScreen = () => {
 
   const handleAdminLogin = () => {
     // Implement admin login logic here
-    if (gymCode === 'yourAdminGymCode') {
+    if (gymCode === '1') {
       // Navigate to the admin panel (replace 'AdminHome' with your actual admin screen)
-      navigation.navigate('AdminHome');
+      navigation.navigate('AdminDashboard');
     } else {
       console.log('Invalid gym code for admin');
       // Handle invalid gym code, such as displaying an error message to the admin

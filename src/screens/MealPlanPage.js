@@ -137,6 +137,8 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     padding: 10,
     borderRadius: 20,
+    borderColor: "orange", // Added orange border color
+    borderWidth: 1, // Added border width to make the border visible
   },
   mealPlanContainer: {
     marginTop: 20,
@@ -188,6 +190,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#333",
     borderRadius: 10,
     marginTop: 10,
+    borderColor: 'green',
   },
   nutrientsTitle: {
     fontSize: 16,
@@ -208,5 +211,6 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   }
 });
+
 
 export default MealPlanPage;

@@ -63,7 +63,7 @@ const StorePage = () => {
   };
 
   const getSubtotal = () => {
-    return cart.reduce((acc, item) => acc + item.price, 0).toFixed(2);
+    return cart.reduce((acc, item) => acc + item.item_price, 0).toFixed(2);
   };
 
   const buyNow = () => {
@@ -85,7 +85,7 @@ const StorePage = () => {
     <TouchableOpacity style={styles.itemContainer}>
       <Image source={{ uri: item.image }} style={styles.itemImage} />
       <Text style={styles.itemName}>{item.item_name}</Text>
-      <Text style={styles.itemPrice}>${item.price}</Text>
+      <Text style={styles.itemPrice}>{item.item_price} PKR</Text>
       <TouchableOpacity
         style={styles.buyButton}
         onPress={() => addToCart(item)}
@@ -107,7 +107,7 @@ const StorePage = () => {
         columnWrapperStyle={styles.columnWrapper}
       />
       <TouchableOpacity style={styles.cartButton} onPress={openCart}>
-        <Text style={styles.cartButtonText}>View Cart (${getSubtotal()})</Text>
+        <Text style={styles.cartButtonText}>View Cart ({getSubtotal()} PKR)</Text>
       </TouchableOpacity>
       <Modal
         animationType="slide"
@@ -118,7 +118,7 @@ const StorePage = () => {
         <View style={styles.centeredView}>
           <View style={styles.modalView}>
             <Text style={styles.modalText}>
-              Cart Subtotal: ${getSubtotal()}
+              Cart Subtotal: {getSubtotal()} PKR
             </Text>
             <View style={{backgroundColor:"#ff8c00",borderRadius:25}}>
             <TouchableOpacity onPress={buyNow} style={{padding:8}} >

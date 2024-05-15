@@ -1,16 +1,33 @@
-import React, { useState, useRef } from "react";
-import { View, StyleSheet, Button, Animated, Alert } from "react-native";
+import React, { useState, useRef, useEffect } from "react";
+import { View, StyleSheet, Text, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView, Animated } from "react-native";
 import { CardField, useStripe } from "@stripe/stripe-react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { supabase } from '../../supabase';
-import { useNavigation } from '@react-navigation/native'
+import { useNavigation } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 
 const PurchaseMembership = () => {
   const { confirmPayment, loading } = useStripe();
-  const paymentOptionsY = useRef(new Animated.Value(1000)).current; // Used for animating the payment options
+  const paymentOptionsY = useRef(new Animated.Value(1000)).current;
   const [cardDetails, setCardDetails] = useState();
   const [showPayment, setShowPayment] = useState(false);
   const navigation = useNavigation();
+
+  useEffect(() => {
+    if (showPayment) {
+      Animated.spring(paymentOptionsY, {
+        toValue: 0,
+        useNativeDriver: true,
+        bounciness: 5,
+      }).start();
+    } else {
+      Animated.spring(paymentOptionsY, {
+        toValue: 1000,
+        useNativeDriver: true,
+        bounciness: 5,
+      }).start();
+    }
+  }, [showPayment]);
 
   const handlePayPress = async () => {
     try {
@@ -49,45 +66,44 @@ const PurchaseMembership = () => {
   };
 
   const togglePaymentOptions = () => {
-    if (showPayment) {
-      // Hide the payment options
-      Animated.spring(paymentOptionsY, {
-        toValue: 1000, // Move off-screen
-        useNativeDriver: true,
-        bounciness: 5,
-      }).start();
-    } else {
-      // Show the payment options
-      Animated.spring(paymentOptionsY, {
-        toValue: 0, // Move into view
-        useNativeDriver: true,
-        bounciness: 5,
-      }).start();
-    }
-    setShowPayment(!showPayment); // Toggle the visibility state
+    setShowPayment(!showPayment);
   };
 
   return (
-    <View style={styles.container}>
-      <Animated.View
-        style={[
-          styles.paymentOptionsContainer,
-          { transform: [{ translateY: paymentOptionsY }] },
-        ]}
-      >
-        <CardField
-          postalCodeEnabled={true}
-          placeholders={{ number: "4242 4242 4242 4242" }}
-          cardStyle={styles.cardField}
-          style={styles.cardContainer}
-          onCardChange={(cardDetails) => {
-            setCardDetails(cardDetails);
-          }}
-        />
-        <Button onPress={handlePayPress} title="Pay" disabled={loading} />
-      </Animated.View>
-      <Button title="Buy membership of $10" onPress={togglePaymentOptions} />
-    </View>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={styles.container}
+    >
+      <ScrollView contentContainerStyle={styles.scrollViewContent}>
+        <Animated.View style={styles.messageContainer}>
+          <Ionicons name="warning-outline" size={24} color="orange" />
+          <Text style={styles.messageText}>Oops! You haven't paid the membership yet.</Text>
+          <Text style={styles.messageText}>To fully access the app, please pay the membership by clicking the button below.</Text>
+        </Animated.View>
+        <Animated.View
+          style={[
+            styles.paymentOptionsContainer,
+            { transform: [{ translateY: paymentOptionsY }] },
+          ]}
+        >
+          <CardField
+            postalCodeEnabled={true}
+            placeholders={{ number: "4242 4242 4242 4242" }}
+            cardStyle={styles.cardField}
+            style={styles.cardContainer}
+            onCardChange={(cardDetails) => {
+              setCardDetails(cardDetails);
+            }}
+          />
+          <TouchableOpacity style={styles.payButton} onPress={handlePayPress}>
+            <Text style={styles.payButtonText}>Pay</Text>
+          </TouchableOpacity>
+        </Animated.View>
+      </ScrollView>
+      <TouchableOpacity style={styles.membershipButton} onPress={togglePaymentOptions}>
+        <Text style={styles.membershipButtonText}>Buy membership of $10</Text>
+      </TouchableOpacity>
+    </KeyboardAvoidingView>
   );
 };
 
@@ -95,7 +111,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "black",
+  },
+  scrollViewContent: {
+    flexGrow: 1,
+    justifyContent: "center",
     alignItems: "center",
+    padding: 20,
   },
   paymentOptionsContainer: {
     width: "100%",
@@ -103,6 +124,8 @@ const styles = StyleSheet.create({
     bottom: 0,
     backgroundColor: "white",
     padding: 20,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
   },
   cardField: {
     backgroundColor: "#FFFFFF",
@@ -111,6 +134,46 @@ const styles = StyleSheet.create({
   cardContainer: {
     height: 50,
     marginVertical: 20,
+  },
+  payButton: {
+    backgroundColor: "orange",
+    borderRadius: 20,
+    paddingVertical: 10,
+    alignItems: "center",
+    marginTop: 10,
+  },
+  payButtonText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  membershipButton: {
+    backgroundColor: "orange",
+    borderRadius: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    alignItems: "center",
+    marginTop: 20,
+    marginBottom: 20, // Added margin bottom to prevent overlapping with the keyboard
+  },
+  membershipButtonText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  messageContainer: {
+    backgroundColor: "#333",
+    padding: 20,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 20,
+  },
+  messageText: {
+    color: "orange",
+    fontSize: 16,
+    textAlign: "center",
+    marginTop: 10,
   },
 });
 

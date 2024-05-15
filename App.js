@@ -267,6 +267,11 @@ export default function App() {
           <Stack.Screen
             name="MembershipPayment"
             component={MembershipPayment}
+            options={{
+              headerShown: true,
+              headerStyle: { backgroundColor: "#000" }, // Set header background color to black
+              headerTintColor: "#ff8c00", // Set header text color to orange
+            }}
           />
           <Stack.Screen name="FitnessDashboard" component={FitnessDashboard} />
           <Stack.Screen

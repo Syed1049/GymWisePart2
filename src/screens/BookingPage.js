@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, FlatList, TextInput } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, FlatList, TextInput ,ScrollView} from 'react-native';
 import { supabase } from '../../supabase'; 
 import { getUserSession } from './SessionService';
 import { Calendar } from 'react-native-calendars';

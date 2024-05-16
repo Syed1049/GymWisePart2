@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { SafeAreaView, View, Text, StyleSheet, ScrollView } from 'react-native';
-import { supabase } from './supabase';
+import { supabase } from '../../supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage'; // Import AsyncStorage
 import { getUserSession } from './SessionService'; // Import getUserSession function
 

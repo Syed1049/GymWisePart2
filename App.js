@@ -33,7 +33,7 @@ import AdminDashboard from "./src/screens/AdminDashboard";
 import AddEquipmentScreen from "./src/screens/AddEquipmentScreen";
 import UpdateAvailabilityScreen from "./src/screens/UpdateAvailabilityScreen";
 import ManageEquipmentScreen from "./src/screens/ManageEquipmentScreen";
-import EquipmentHomeScreen from "./EquipmentHomeScreen";
+import EquipmentHomeScreen from "./src/screens/EquipmentHomeScreen";
 import UpdatedGoalsDetailsScreen from "./src/screens/UpdatedGoalsDetailsScreen";
 import CourseCreationScreen from "./src/screens/CourseCreationScreen";
 import SetAvailableHoursScreen from "./src/screens/SetAvailbleHoursScreen";

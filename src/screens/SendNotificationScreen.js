@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { SafeAreaView, View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput } from 'react-native';
-import { supabase } from './supabase';
+import { supabase } from '../../supabase';
 
 const SendNotificationScreen = () => {
   const [users, setUsers] = useState([]);

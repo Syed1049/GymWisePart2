@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { SafeAreaView, View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { supabase } from './supabase';
+import { supabase } from '../../supabase';
 
 const SetGymTimingsScreen = () => {
   const navigation = useNavigation();

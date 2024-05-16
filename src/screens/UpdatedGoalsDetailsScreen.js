@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, TouchableOpacity, Alert, Modal, TextInput } fro
 import RNPickerSelect from 'react-native-picker-select';
 import { useNavigation } from '@react-navigation/native';
 import RNDateTimePicker from '@react-native-community/datetimepicker';
-import { useNavigation } from '@react-navigation/native';
 import { supabase } from '../../supabase';
 import { getUserSession } from './SessionService';
 

@@ -89,19 +89,21 @@ const Store = () => {
     }).start();
   };
 
-  const renderItem = ({ item }) => (
-    <View style={styles.itemContainer}>
-      <Image source={{ uri: item.image }} style={styles.itemImage} />
-      <Text style={styles.itemName}>{item.item_name}</Text>
-      <Text style={styles.itemPrice}>{item.item_price} PKR</Text>
-      <TouchableOpacity
-        style={styles.buyButton}
-        onPress={() => addToCart(item)}
-      >
-        <Text style={styles.buyButtonText}>Add to Cart</Text>
-      </TouchableOpacity>
-    </TouchableOpacity>
-  );
+  // const renderItem = ({ item }) => (
+  //   <View style={styles.itemContainer}>
+  //     <Image source={{ uri: item.image }} style={styles.itemImage} />
+  //     <Text style={styles.itemName}>{item.item_name}</Text>
+  //     <Text style={styles.itemPrice}>{item.item_price} PKR</Text>
+  //     <TouchableOpacity
+  //       style={styles.buyButton}
+  //       onPress={() => addToCart(item)}
+  //     >
+  //       <Text style={styles.buyButtonText}>Add to Cart</Text>
+  //     </TouchableOpacity>
+
+  //   </TouchableOpacity>
+    
+  // );
 
   return (
     <SafeAreaView style={styles.container}>

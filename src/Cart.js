@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert } from 'react-native';
-import { supabase } from './supabase';
+import { supabase } from '../supabase';
 import { Picker } from '@react-native-picker/picker';
 import { getUserSession } from './SessionService';
 

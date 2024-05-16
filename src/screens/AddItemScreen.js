@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { TextInput } from 'react-native-paper';
 import * as ImagePicker from 'expo-image-picker';
-import { supabase } from './supabase';
+import { supabase } from '../../supabase';
 
 import * as FileSystem from 'expo-file-system';
 

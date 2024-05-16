@@ -157,6 +157,8 @@ const handlelogoutpress=()=>{
             screenName = 'GoalsScreen';
             break;
             
+            case 'Meal Plan':
+              screenName = 'MealPlanPage';
             case 'Diet Plan':
               screenName = 'TutorialHome';
               break;

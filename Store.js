@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigation } from '@react-navigation/native'; // Import useNavigation hook
 import {
   View,
   Text,
@@ -7,96 +8,96 @@ import {
   TouchableOpacity,
   Image,
   SafeAreaView,
-  Button,
-  Animated,
-  Modal,
   Alert,
 } from 'react-native';
-import {CardField, useConfirmPayment} from '@stripe/stripe-react-native';
-import { supabase } from './supabase'; // Ensure this is correctly imported
+import { supabase } from './supabase';
 
-const StorePage = () => {
+const Store = () => {
+  const navigation = useNavigation(); // Access navigation object using useNavigation hook
+
   const [items, setItems] = useState([]);
   const [cart, setCart] = useState([]);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [cardData, setCardData] = useState();
-  const [showPaymentOptions, setShowPaymentOptions] = useState(false);
-  const fadeAnim = useRef(new Animated.Value(1)).current;
-  const paymentOptionsY = useRef(new Animated.Value(1000)).current; // Start off-screen
-  const { confirmPayment, loading } = useConfirmPayment();
 
   useEffect(() => {
     fetchStoreItems();
   }, []);
 
   const fetchStoreItems = async () => {
-    const { data, error } = await supabase.from('store').select('*');
-      console.log(data,"tg5yt5");
-    if (error) {
+    try {
+      const { data, error } = await supabase.from('store').select('*');
+      if (error) {
+        throw error;
+      }
+
+      // Map through the fetched data and extract image URLs
+      const itemsWithImageUrls = data.map(item => ({
+        ...item,
+        imageUrl: item.image, // Assuming the column name is 'image_url'
+      }));
+
+      setItems(itemsWithImageUrls);
+    } catch (error) {
       Alert.alert('Error fetching store items', error.message);
-    } else {
-      setItems(data);
     }
   };
 
   const addToCart = (item) => {
-    setCart([...cart, item]);
+    const itemIndex = cart.findIndex((cartItem) => cartItem.id === item.id);
+    if (itemIndex !== -1) {
+      const newCart = [...cart];
+      newCart[itemIndex].quantity += 1;
+      setCart(newCart);
+    } else {
+      setCart([...cart, { ...item, quantity: 1 }]);
+    }
   };
 
-  const handlePayPress = async () => {
-    const billingDetails = {
-      email: "123@gmail.com",
-    };
-
-    console.log(cardData);
-    if (cardData?.expiryYear != null && cardData?.validCVC != 'Incomplete') {
-      setShowPaymentOptions(false)
-      Alert.alert('Payment Success');
-      setCardData(null)
-    } else {
-      Alert.alert('Invalid Card Data', 'Enter valid card data');
+  const removeFromCart = (itemId) => {
+    const itemIndex = cart.findIndex((item) => item.id === itemId);
+    if (itemIndex !== -1) {
+      const newCart = [...cart];
+      if (newCart[itemIndex].quantity === 1) {
+        newCart.splice(itemIndex, 1);
+      } else {
+        newCart[itemIndex].quantity -= 1;
+      }
+      setCart(newCart);
     }
   };
 
   const openCart = () => {
-    setModalVisible(true);
-  };
-
-  const getSubtotal = () => {
-    return cart.reduce((acc, item) => acc + item.price, 0).toFixed(2);
-  };
-
-  const buyNow = () => {
-    setModalVisible(false);
-    setShowPaymentOptions(true);
-    Animated.timing(fadeAnim, {
-      toValue: 0.4,
-      duration: 500,
-      useNativeDriver: true,
-    }).start();
-    Animated.spring(paymentOptionsY, {
-      toValue: 0,
-      useNativeDriver: true,
-      bounciness: 5,
-    }).start();
+    if (cart.length > 0) {
+      navigation.navigate('Cart', { cartItems: cart });
+    }
   };
 
   const renderItem = ({ item }) => (
-    <TouchableOpacity style={styles.itemContainer}>
+    <View style={styles.itemContainer}>
       <Image source={{ uri: item.image }} style={styles.itemImage} />
       <Text style={styles.itemName}>{item.item_name}</Text>
-      <Text style={styles.itemPrice}>${item.price}</Text>
-      <TouchableOpacity
-        style={styles.buyButton}
-        onPress={() => addToCart(item)}
-      >
-        <Text style={styles.buyButtonText}>Add to Cart</Text>
-      </TouchableOpacity>
-    </TouchableOpacity>
+      <Text style={styles.itemPrice}> Pkr {item.item_price.toFixed(2)}</Text>
+      <View style={styles.quantityContainer}>
+        <TouchableOpacity style={styles.quantityButton} onPress={() => addToCart(item)}>
+          <Text style={styles.quantityButtonText}>+</Text>
+        </TouchableOpacity>
+        <Text style={styles.quantityText}>
+          {cart.find((cartItem) => cartItem.id === item.id)?.quantity || 0}
+        </Text>
+        <TouchableOpacity
+          style={styles.quantityButton}
+          onPress={() => removeFromCart(item.id)}
+        >
+          <Text style={styles.quantityButtonText}>-</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
   );
 
   return (
     <SafeAreaView style={styles.container}>
+      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+        <Text style={styles.backButtonText}>{'Back'}</Text>
+      </TouchableOpacity>
       <Text style={styles.pageTitle}>Gym Store</Text>
       <FlatList
         data={items}
@@ -106,55 +107,15 @@ const StorePage = () => {
         contentContainerStyle={styles.listContainer}
         columnWrapperStyle={styles.columnWrapper}
       />
-      <TouchableOpacity style={styles.cartButton} onPress={openCart}>
-        <Text style={styles.cartButtonText}>View Cart (${getSubtotal()})</Text>
-      </TouchableOpacity>
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
+      <TouchableOpacity
+        style={[styles.cartButton, { opacity: cart.length > 0 ? 1 : 0.5 }]}
+        onPress={openCart}
+        disabled={cart.length === 0}
       >
-        <View style={styles.centeredView}>
-          <View style={styles.modalView}>
-            <Text style={styles.modalText}>
-              Cart Subtotal: ${getSubtotal()}
-            </Text>
-            <Button title="Buy Now" onPress={buyNow} />
-            <Button title="Close Cart" onPress={() => setModalVisible(false)} />
-          </View>
-        </View>
-      </Modal>
-      {showPaymentOptions && (
-        <Animated.View
-          style={[
-            styles.paymentOptionsContainer,
-            { transform: [{ translateY: paymentOptionsY }] },
-          ]}
-        >
-          <View style={styles.inputContainer}>
-            <CardField
-              postalCodeEnabled={true}
-              placeholders={{ number: '4242 4242 4242 4242', }}
-              cardStyle={{
-                backgroundColor: '#FFFFFF',
-                textColor: '#000000',
-                borderColor: 'black'
-              }}
-              style={styles.cardField}
-              onCardChange={(cardDetails) => {
-                setCardData(cardDetails)
-              }}
-              onFocus={(focusedField) => {
-                console.log('focusField', focusedField);
-              }}
-            />
-          </View>
-          <View style={styles.buttonContainer}>
-            <Button onPress={handlePayPress} title="Pay" />
-          </View>
-        </Animated.View>
-      )}
+        <Text style={styles.cartButtonText}>
+          View Cart (Pkr {cart.reduce((acc, item) => acc + item.item_price * item.quantity, 0).toFixed(2)})
+        </Text>
+      </TouchableOpacity>
     </SafeAreaView>
   );
 };
@@ -162,34 +123,13 @@ const StorePage = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "black",
-  },
-  
-  paymentOptionsContainer: {
-    flex: 1,
-    flexDirection: "column",
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "black",
-    padding: 20,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: -2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 5,
+    backgroundColor: 'black',
   },
   pageTitle: {
     fontSize: 24,
-    fontWeight: "bold",
-    color: "white",
-    textAlign: "center",
+    fontWeight: 'bold',
+    color: 'white',
+    textAlign: 'center',
     marginVertical: 20,
   },
   listContainer: {
@@ -197,113 +137,86 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   columnWrapper: {
-    justifyContent: "space-between",
+    justifyContent: 'space-between',
   },
   itemContainer: {
-    alignItems: "center",
-    justifyContent: "center",
-    margin: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    margin: 10,
     padding: 10,
-    backgroundColor: "#333",
+    backgroundColor: '#333',
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: "orange",
-    shadowColor: "#000",
+    borderColor: '#CA9329',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
-    minWidth: 160,
-    maxWidth: 160,
-    flexBasis: "48%",
+    width: '45%',
+    
   },
   itemImage: {
     width: 120,
     height: 120,
     marginBottom: 10,
+    borderRadius: 10,
   },
   itemName: {
-    fontSize: 17,
-    fontWeight: "bold",
-    color: "white",
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: 'white',
+    marginBottom: 5,
   },
   itemPrice: {
-    fontSize: 15,
-    color: "white",
-    marginBottom: 10,
-  },
-  buyButton: {
-    marginVertical: 10,
-    paddingVertical: 6,
-    paddingHorizontal: 20,
-    backgroundColor: "#0066cc",
-    borderRadius: 20,
-  },
-  buyButtonText: {
-    color: "white",
-    fontSize: 15,
+    fontSize: 16,
+    color: 'white',
+    fontWeight: 'bold',
+    marginBottom: 5,
   },
   cartButton: {
-    backgroundColor: "#ff8c00",
+    backgroundColor: '#CA9329',
     padding: 15,
     borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
     margin: 20,
   },
   cartButtonText: {
-    color: "white",
+    color: 'white',
     fontSize: 18,
-    fontWeight: "bold",
+    fontWeight: 'bold',
   },
-  centeredView: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: 22,
-  },
-  modalView: {
-    margin: 20,
-    backgroundColor: "black",
-    borderRadius: 20,
-    padding: 35,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  modalText: {
-    marginBottom: 15,
-    color: "white",
-    textAlign: "center",
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-  inputContainer: {
+  quantityContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
+    marginTop: 10,
   },
-  cardField: {
-    flex: 1,
-    borderColor: 'black',
-    height: 50,
-    marginHorizontal: 0,
-  },
-  verticalLine: {
-    height: '100%',
-    width: 1,
-    backgroundColor: '#CCCCCC',
-  },
-  buttonContainer: {
-    width: '100%',
+  quantityButton: {
+    backgroundColor: '#CA9329',
+    borderRadius: 25, // Increased borderRadius
     paddingHorizontal: 10,
+    paddingVertical: 5,
+    marginHorizontal: 5,
+  },
+  quantityButtonText: {
+    color: 'white',
+    fontSize: 18,
+  },
+  quantityText: {
+    fontSize: 18,
+    color: 'white',
+  },
+  backButton: {
+    position: 'absolute',
+    top: 25,
+    left: 10,
+    zIndex: 1,
+  },
+  backButtonText: {
+    color: '#CA9329',
+    fontSize: 20,
   },
 });
 
-export default StorePage;
+export default Store;

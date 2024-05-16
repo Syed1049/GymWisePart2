@@ -1,66 +1,98 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, FlatList, TextInput } from 'react-native';
-import { supabase } from './supabase'; 
+import { View, Text, StyleSheet, TouchableOpacity, Modal, FlatList, TextInput, Alert, ScrollView } from 'react-native';
+import { supabase } from './supabase';
 import { getUserSession } from './SessionService';
 import { Calendar } from 'react-native-calendars';
-
+import moment from 'moment';
+import { Picker } from '@react-native-picker/picker';
 const BookingPage = () => {
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTimeSlot, setSelectedTimeSlot] = useState('');
-  const [selectedEquipment, setSelectedEquipment] = useState('');
+  const [selectedEquipment, setSelectedEquipment] = useState([]);
+  const [selectedInstance, setSelectedInstance] = useState('');
   const [selectedExercise, setSelectedExercise] = useState('');
   const [equipmentOptions, setEquipmentOptions] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [dateModalVisible, setDateModalVisible] = useState(false);
   const [timeSlotModalVisible, setTimeSlotModalVisible] = useState(false);
-  const [markedDates, setMarkedDates] = useState({});
-  const [classifiedEquipment, setClassifiedEquipment] = useState([]);
-  const [userId, setuserId] = useState(null); // Add memberId state
+  const [timeSlots, setTimeSlots] = useState([]);
+  const [quantity, setQuantity] = useState({});
+  const [showWeighted, setShowWeighted] = useState(true);
+  const [selectedWeight, setSelectedWeight] = useState('');
+  const [weights, setWeights] = useState([]);
+const[originalEquipmentOptions,setOriginalEquipmentOptions]=useState([]);
+const [filteredEquipmentOptions, setFilteredEquipmentOptions] = useState([]);
+const [selectedEquipments, setSelectedEquipments] = useState({});
 
   useEffect(() => {
-
-    
-    const fetchEquipmentOptions = async () => {
-      try {
-        const { data: equipmentData, error } = await supabase
-          .from('gymequipments')
-          .select('equipmentid, equipmentname, weightcategory, equipmenttype');
-        if (error) {
-          throw error;
-        }
-        setEquipmentOptions(equipmentData || []);
-        // Classify equipment by weight and type
-        const classified = classifyEquipment(equipmentData || []);
-        setClassifiedEquipment(classified);
-      } catch (error) {
-        console.error('Error fetching equipment data:', error.message);
-      }
-    };
-
     fetchEquipmentOptions();
-  
+    
   }, []);
-  const classifyEquipment = (equipmentData) => {
-    const classified = {};
-    equipmentData.forEach((equipment) => {
-      const { weight, type } = equipment;
-      if (!classified[weight]) {
-        classified[weight] = {};
+
+  const fetchEquipmentOptions = async () => {
+    try {
+      const { data: equipmentData, error: equipmentError } = await supabase.from('equipment').select('*');
+
+      if (equipmentError) {
+        throw equipmentError;
       }
-      if (!classified[weight][type]) {
-        classified[weight][type] = [];
+
+      const { data: instancesData, error: instancesError } = await supabase.from('equipment_instances').select('*');
+
+      if (instancesError) {
+        throw instancesError;
       }
-      classified[weight][type].push(equipment);
-    });
-    return classified;
+
+      const availableEquipment = equipmentData.map((equipment) => {
+        const instances = instancesData.filter(instance => instance.equipmentid === equipment.equipmentid && instance.availability === 'available');
+        return {
+          ...equipment,
+          instances
+        };
+      });
+
+      setEquipmentOptions(availableEquipment);
+       setOriginalEquipmentOptions(availableEquipment);
+      const allWeights = instancesData.map(instance => instance.weight);
+      const uniqueWeights = [...new Set(allWeights)];
+      setWeights(uniqueWeights);
+    } catch (error) {
+      console.error('Error fetching equipment data:', error.message);
+    }
   };
+
+  const updateQuantity = (equipmentId, change) => {
+    const currentQuantity = quantity[equipmentId] || 0;
+    const newQuantity = Math.max(currentQuantity + change, 0);
+    setQuantity(prevQuantity => ({
+      ...prevQuantity,
+      [equipmentId]: newQuantity,
+    }));
+    
+    // Update selected equipment
+    if (newQuantity > 0) {
+      setSelectedEquipment(prevSelectedEquipment => ({
+        ...prevSelectedEquipment,
+        [equipmentId]: newQuantity,
+      }));
+    } else {
+      // If quantity becomes zero, remove the equipment from selected list
+      const { [equipmentId]: removed, ...rest } = selectedEquipment;
+      setSelectedEquipment(rest);
+    }
+  
+    console.log(`Equipment ID: ${equipmentId}, Quantity: ${newQuantity}`);
+  };
+  
+
   const handleBooking = async () => {
     try {
-      if (!selectedDate || !selectedTimeSlot || !selectedEquipment || !selectedExercise) {
+      if (!selectedDate || !selectedTimeSlot || !selectedExercise) {
         console.error('Please select all booking details');
+        Alert.alert('Please select all booking details')
         return;
       }
-      
+  
       const sessionData = await getUserSession();
       if (!sessionData?.userId) {
         console.error('User not authenticated.');
@@ -68,41 +100,104 @@ const BookingPage = () => {
       }
   
       const userId = sessionData.userId;
-      const { data, error } = await supabase
-        .from('bookings')
-        .insert([
-          {
+  
+      const bookingData = [];
+  
+      // Iterate over each selected equipment and create a booking entry
+      for (const equipmentId of Object.keys(selectedEquipment)) {
+        const quantity = selectedEquipment[equipmentId];
+  
+        for (let i = 0; i < quantity; i++) {
+          // Fetch equipment instances
+          const { data: instances, error: instanceError } = await supabase
+            .from('equipment_instances')
+            .select('unique_identifier')
+            .eq('equipmentid', equipmentId);
+  
+          if (instanceError) {
+            console.error('Error fetching equipment instance:', instanceError.message);
+            continue; // Skip to the next equipment
+          }
+  
+          if (!instances || instances.length === 0) {
+            console.error('No available equipment instance found for the selected equipment.');
+            continue; // Skip to the next equipment
+          }
+  
+          // Select a random instance (for demonstration purposes)
+          const randomInstance = instances[Math.floor(Math.random() * instances.length)];
+  
+          const { unique_identifier } = randomInstance;
+  
+          const bookingEntry = {
             memberid: userId,
-            equipmentid: selectedEquipment,
+            equipmentid: unique_identifier, // Using unique_identifier for equipmentid
             date: selectedDate,
             timeslot: selectedTimeSlot,
-            excercisename : selectedExercise,
-           
-          },
-        ]);
-
-      if (error) {
-        throw error;
+            excercisename: selectedExercise,
+          };
+  
+          bookingData.push(bookingEntry);
+          console.log('Booking Entry:', bookingEntry);
+        }
       }
-
-      console.log('Booking submitted successfully:', data);
+  
+      if (bookingData.length === 0) {
+        console.error('No booking data found.');
+        return;
+      }
+  
+      // Insert all booking entries
+      const { data: insertedBookings, error: bookingError } = await supabase.from('bookings').insert(bookingData);
+  
+      if (bookingError) {
+        throw bookingError;
+      }
+  
+      console.log('Bookings submitted successfully:', insertedBookings);
+  
+      // Clear selected booking details after successful booking
       setSelectedDate('');
       setSelectedTimeSlot('');
       setSelectedEquipment('');
+      setSelectedInstance('');
       setSelectedExercise('');
     } catch (error) {
       console.error('Error submitting booking:', error.message);
     }
   };
-
   
   
 
-  const handleDateSelection = (date) => {
+  const handleDateSelection = async (date) => {
+    const currentDate = moment();
+    const selectedDay = moment(date.dateString);
+
+    if (selectedDay.isBefore(currentDate, 'day')) {
+      Alert.alert(
+        'Invalid Date',
+        'Please select a future date.',
+        [{ text: 'OK', onPress: () => {} }]
+      );
+      return;
+    }
+
+    const slots = await generateTimeSlotsForDate(date.dateString);
+    if (Object.values(slots).flat().length === 0) {
+      Alert.alert(
+        'No Available Slots',
+        'There are no available time slots for the selected date.',
+        [{ text: 'OK', onPress: () => {} }]
+      );
+      return;
+    }
+
     setSelectedDate(date.dateString);
     setDateModalVisible(false);
+    setTimeSlots(slots);
+    setTimeSlotModalVisible(true);
   };
-  
+
   const handleTimeSlotSelection = (timeSlot) => {
     setSelectedTimeSlot(timeSlot);
     setTimeSlotModalVisible(false);
@@ -111,10 +206,114 @@ const BookingPage = () => {
   const handleExerciseChange = (exercise) => {
     setSelectedExercise(exercise);
   };
+
   const handleSelectEquipment = (equipmentId) => {
-    setSelectedEquipment(equipmentId);
+    // Check if the equipment is already selected
+    if (selectedEquipment[equipmentId]) {
+      // If selected, increment the quantity
+      setSelectedEquipment(prevSelectedEquipment => ({
+        ...prevSelectedEquipment,
+        [equipmentId]: prevSelectedEquipment[equipmentId] + 1,
+      }));
+    } else {
+      // If not selected, set the quantity to 1
+      setSelectedEquipment(prevSelectedEquipment => ({
+        ...prevSelectedEquipment,
+        [equipmentId]: 1,
+      }));
+    }
+  
+    // Close the equipment selection modal
     setModalVisible(false);
   };
+  
+
+  const handleWeightChange = async (weight) => {
+    setSelectedWeight(weight); // Update selectedWeight first
+    
+    if (weight) {
+      try {
+        // Fetch instances with the selected weight
+        const { data: instances, error } = await supabase
+          .from('equipment_instances')
+          .select('equipmentid')
+          .eq('weight', weight);
+  
+        if (error) {
+          throw error;
+        }
+  
+        // Extract equipment ids from instances
+        const equipmentIds = instances.map((instance) => instance.equipmentid);
+  
+        // Filter original equipment options based on extracted equipment ids
+        const filteredEquipmentOptions = originalEquipmentOptions.filter((equipment) =>
+          equipmentIds.includes(equipment.equipmentid)
+        );
+  
+        // Update state with filtered equipment options
+        setFilteredEquipmentOptions(filteredEquipmentOptions);
+      } catch (error) {
+        console.error('Error fetching instances with selected weight:', error.message);
+      }
+    } else {
+      // If no weight is selected, reset the filtered equipment options to the original list
+      setFilteredEquipmentOptions(originalEquipmentOptions);
+    }
+  };
+  
+  
+  
+  
+  
+
+  const generateTimeSlotsForDate = async (selectedDate) => {
+    try {
+      const selectedDay = new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+
+      const { data: allGymTimings, error } = await supabase.from('gym_timings').select('opening_time, closing_time, day');
+
+      if (error) {
+        throw error;
+      }
+
+      if (!allGymTimings || allGymTimings.length === 0) {
+        console.error('No gym timings found in the database.');
+        return [];
+      }
+
+      const gymTimingsForSelectedDay = allGymTimings.filter(timing => timing.day.toLowerCase() === selectedDay);
+
+      if (gymTimingsForSelectedDay.length === 0) {
+        console.error(`No gym timings found for ${selectedDay}.`);
+        return [];
+      }
+
+      const timeSlots = [];
+
+      gymTimingsForSelectedDay.forEach(({ opening_time, closing_time }) => {
+        const openingMoment = moment(opening_time, 'HH:mm:ss');
+        const closingMoment = moment(closing_time, 'HH:mm:ss');
+
+        let currentTime = moment(openingMoment);
+
+        while (currentTime < closingMoment) {
+          const startTimeStr = currentTime.format('HH:mm');
+          const endTimeStr = moment(currentTime).add(30, 'minutes').format('HH:mm');
+          const label = `${startTimeStr} - ${endTimeStr}`;
+          timeSlots.push({ label });
+          currentTime.add(30, 'minutes');
+        }
+      });
+
+      return timeSlots;
+    } catch (error) {
+      console.error('Error generating time slots:', error.message);
+      return [];
+    }
+  };
+  
+
   return (
     <View style={styles.container}>
       <View style={styles.bookingContainer}>
@@ -122,7 +321,7 @@ const BookingPage = () => {
         <View style={styles.inputContainer}>
           <Text style={styles.label}>Select Date:</Text>
           <TouchableOpacity style={styles.dropdown} onPress={() => setDateModalVisible(true)}>
-            <Text style={styles.dropdownText}>{selectedDate || 'Select Date'}</Text>
+            <Text style={styles.dropdownText}>{selectedDate ? moment(selectedDate).format('YYYY-MM-DD') : 'Select Date'}</Text>
           </TouchableOpacity>
         </View>
         <View style={styles.inputContainer}>
@@ -134,53 +333,36 @@ const BookingPage = () => {
         <View style={styles.inputContainer}>
           <Text style={styles.label}>Select Equipment:</Text>
           <TouchableOpacity style={styles.dropdown} onPress={() => setModalVisible(true)}>
-            <Text style={styles.dropdownText}>{selectedEquipment ? equipmentOptions.find(equipment => equipment.equipmentid === selectedEquipment)?.equipmentname : 'Select Equipment'}</Text>
+            <Text style={styles.dropdownText}>{selectedEquipment ? equipmentOptions.find(e => e.equipmentid === selectedEquipment)?.equipmentname : 'Select Equipment'}</Text>
           </TouchableOpacity>
         </View>
         <View style={styles.inputContainer}>
-          <Text style={styles.label}>Enter Exercise Name:</Text>
+          <Text style={styles.label}>Enter Session Name:</Text>
           <TextInput
             style={styles.input}
             value={selectedExercise}
             onChangeText={handleExerciseChange}
-            placeholder="Enter Exercise Name"
+          
+            
           />
         </View>
         <TouchableOpacity style={styles.button} onPress={handleBooking}>
           <Text style={styles.buttonText}>Book Now</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-      <Text style={styles.backButtonText}>Back</Text>
-    </TouchableOpacity>
       </View>
 
       <Modal
         animationType="slide"
         transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
+        visible={dateModalVisible}
+        onRequestClose={() => setDateModalVisible(false)}
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <FlatList
-              data={equipmentOptions}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={styles.item}
-                  onPress={() => {
-                    setSelectedEquipment(item.equipmentid);
-                    setModalVisible(false);
-                  }}
-                >
-                  <Text style={styles.itemText}>{item.equipmentname}</Text>
-                </TouchableOpacity>
-              )}
-              keyExtractor={(item) => item.equipmentid.toString()}
-              numColumns={3}
+            <Calendar
+              current={selectedDate}
+              onDayPress={(day) => handleDateSelection(day)}
             />
-            <TouchableOpacity style={styles.closeButton} onPress={() => setModalVisible(false)}>
-              <Text style={styles.closeButtonText}>Close</Text>
-            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -188,18 +370,101 @@ const BookingPage = () => {
       <Modal
   animationType="slide"
   transparent={true}
-  visible={dateModalVisible}
-  onRequestClose={() => setDateModalVisible(false)}
+  visible={modalVisible}
+  onRequestClose={() => setModalVisible(false)}
 >
   <View style={styles.modalContainer}>
     <View style={styles.modalContent}>
-      <Calendar
-        current={selectedDate}
-        markedDates={markedDates}
-        onDayPress={(day) => handleDateSelection(day)}
-      />
+      {/* Toggle buttons */}
+      <View style={styles.toggleButtons}>
+        <TouchableOpacity
+          style={[styles.toggleButton, showWeighted ? styles.activeToggleButton : null]}
+          onPress={() => setShowWeighted(true)}
+        >
+          <Text style={styles.toggleButtonText}>Weighted</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.toggleButton, !showWeighted ? styles.activeToggleButton : null]}
+          onPress={() => setShowWeighted(false)}
+        >
+          <Text style={styles.toggleButtonText}>Non-Weighted</Text>
+        </TouchableOpacity>
+      </View>
 
+      {/* Weight selection */}
+      {showWeighted && (
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>Select Weight:</Text>
+          <Picker
+            selectedValue={selectedWeight}
+            style={styles.input}
+            onValueChange={(itemValue) => handleWeightChange(itemValue)}
+          >
+            <Picker.Item label="Select Weight" value="" />
+            {weights.map((weight) => (
+              <Picker.Item key={weight} label={`${weight} kgs`} value={weight} />
+            ))}
+          </Picker>
+        </View>
+      )}
 
+      {/* Equipment list */}
+      <Text style={styles.weightHeading}>
+        {showWeighted ? 'Weighted Equipment' : 'Non-Weighted Equipment'}
+        {showWeighted && selectedWeight ? ` - ${selectedWeight} lbs` : ''}
+      </Text>
+      <ScrollView>
+  {filteredEquipmentOptions.map((equipment) => (
+    <View key={equipment.equipmentid} style={styles.itemContainer}>
+
+      <TouchableOpacity
+        style={styles.item}
+        onPress={() => {
+          setSelectedEquipment(equipment.equipmentid);
+          handleSelectEquipment(equipment.equipmentid)
+          setModalVisible(false);
+        }}
+      >
+        <Text style={styles.itemText}>{equipment.equipmentname}</Text>
+      </TouchableOpacity>
+      {/* Quantity selection */}
+      <View style={styles.quantityContainer}>
+        <TouchableOpacity
+          style={styles.quantityButton}
+          onPress={() => {
+            if (showWeighted && !selectedWeight) {
+              // Show a popup or alert to prompt the user to select a weight first
+              alert('Please select a weight first.');
+            } else {
+              updateQuantity(equipment.equipmentid, -1);
+            }
+          }}
+        >
+          <Text style={styles.quantityButtonText}>-</Text>
+        </TouchableOpacity>
+        <Text style={styles.quantityText}>{quantity[equipment.equipmentid] || 0}</Text>
+        <TouchableOpacity
+          style={styles.quantityButton}
+          onPress={() => {
+            if (showWeighted && !selectedWeight) {
+              // Show a popup or alert to prompt the user to select a weight first
+              alert('Please select a weight first.');
+            } else {
+              updateQuantity(equipment.equipmentid, 1);
+            }
+          }}
+        >
+          <Text style={styles.quantityButtonText}>+</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  ))}
+</ScrollView>
+
+      {/* Close button */}
+      <TouchableOpacity style={styles.closeButton} onPress={() => setModalVisible(false)}>
+        <Text style={styles.closeButtonText}>Close</Text>
+      </TouchableOpacity>
     </View>
   </View>
 </Modal>
@@ -213,18 +478,16 @@ const BookingPage = () => {
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <FlatList
-              data={generateTimeSlots()}
+              data={timeSlots}
               renderItem={({ item }) => (
                 <TouchableOpacity
                   style={styles.item}
-                  onPress={() => {
-                    handleTimeSlotSelection(item.label);
-                  }}
+                  onPress={() => handleTimeSlotSelection(item.label)}
                 >
                   <Text style={styles.itemText}>{item.label}</Text>
                 </TouchableOpacity>
               )}
-              keyExtractor={(item) => item.label}
+              keyExtractor={(item, index) => index.toString()}
               numColumns={3}
             />
             <TouchableOpacity style={styles.closeButton} onPress={() => setTimeSlotModalVisible(false)}>
@@ -235,32 +498,6 @@ const BookingPage = () => {
       </Modal>
     </View>
   );
-};
-
-const generateDateOptions = () => {
-  const dateOptions = {};
-  if (selectedDate) {
-    dateOptions[selectedDate] = { selected: true, selectedColor: '#3498db' };
-  }
-  return dateOptions;
-};
-
-const generateTimeSlots = () => {
-  const timeSlots = [];
-  const startTime = new Date();
-  startTime.setHours(6, 0, 0, 0); 
-  const endTime = new Date();
-  endTime.setHours(22, 0, 0, 0); 
-  const slotDuration = 30 * 60 * 1000;
-  let currentTime = new Date(startTime);
-  while (currentTime < endTime) {
-    const startTimeStr = currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const endTimeStr = new Date(currentTime.getTime() + slotDuration).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const label = `${startTimeStr} - ${endTimeStr}`;
-    timeSlots.push({ label });
-    currentTime.setTime(currentTime.getTime() + slotDuration);
-  }
-  return timeSlots;
 };
 
 const styles = StyleSheet.create({
@@ -305,21 +542,18 @@ const styles = StyleSheet.create({
   input: {
     backgroundColor: '#333',
     borderRadius: 10,
-    height: 40,
-    paddingLeft: 10,
     color: 'white',
+    padding: 10,
   },
   button: {
     backgroundColor: '#CA9329',
-    padding: 10,
     borderRadius: 10,
-    width: '100%',
+    padding: 15,
     alignItems: 'center',
   },
   buttonText: {
     color: 'white',
     fontSize: 16,
-    fontWeight: 'bold',
   },
   modalContainer: {
     flex: 1,
@@ -328,39 +562,104 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContent: {
-    backgroundColor: 'white',
+    backgroundColor: '#222',
     borderRadius: 10,
     padding: 20,
     width: '80%',
     maxHeight: '80%',
   },
-  item: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 10,
-    margin: 5,
+  toggleButtons: {
+    flexDirection: 'row',
+    marginBottom: 20,
+  },
+  toggleButton: {
     backgroundColor: '#333',
     borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    marginRight: 10,
+  },
+  activeToggleButton: {
+    backgroundColor: 'blue',
+  },
+  toggleButtonText: {
+    color: 'white',
+  },
+  weightHeading: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    color: 'white',
+  },
+  itemContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  item: {
+    backgroundColor: '#333',
+    borderRadius: 10,
+    padding: 10,
+    flex: 1,
+    marginRight: 10,
   },
   itemText: {
+    color: 'white',
+  },
+  weightSelectionContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    flex: 1,
+    marginRight: 10,
+  },
+  weightButton: {
+    backgroundColor: '#333',
+    borderRadius: 10,
+    padding: 10,
+    marginRight: 5,
+  },
+  selectedWeightButton: {
+    backgroundColor: 'blue',
+  },
+  weightButtonText: {
+    color: 'white',
+  },
+  quantityContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  quantityButton: {
+    backgroundColor: '#333',
+    borderRadius: 10,
+    padding: 10,
+    marginHorizontal: 5,
+  },
+  quantityButtonText: {
+    color: 'white',
+  },
+  quantityText: {
     color: 'white',
     fontSize: 16,
   },
   closeButton: {
-    marginTop: 20,
-    backgroundColor: '#3498db',
+    backgroundColor: 'red',
     borderRadius: 10,
-    padding: 10,
+    padding: 15,
     alignItems: 'center',
+    marginTop: 20,
   },
   closeButtonText: {
     color: 'white',
     fontSize: 16,
-    fontWeight: 'bold',
   },
-
-  
+  disabledItemContainer: {
+    opacity: 0.5, 
+  },
+  disabledItemText: {
+    color: 'grey', 
+  },
 });
 
 export default BookingPage;

@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { getUserSession } from './SessionService';
 import { supabase } from './supabase';
+import UpdatedGoalDetailsScreen from './UpdatedGoalsDetailsScreen';
 
 const GoalsScreen = () => {
   const [savedGoals, setSavedGoals] = useState([]);
@@ -47,7 +48,7 @@ const GoalsScreen = () => {
   };
 
   const handlePlusButtonPress = () => {
-    navigation.navigate('GoalDetails0.Screen');
+    navigation.navigate("UpdatedGoalsDetailsScreen");
   };
 
   const handlePlayButtonPress = (planId) => {

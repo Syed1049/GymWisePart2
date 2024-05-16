@@ -43,6 +43,10 @@ import SessionsScreen from './SessionsScreen';
 import TrainerListScreen from './TrainerListScreen';
 import TrainerDetailsScreen from './TrainerDetailsScreen';
 import CustomGoalScreen from './CustomGoalScreen';
+import AddItemScreen from './AddItemScreen';
+import Cart from './Cart';
+import SendNotificationScreen from './SendNotificationScreen';
+import NotificationScreen from './NotificationScreen';
 import TrainerPage from './TrainerPage';
 import BMI from './BMI';
 import FitnessDashboard from './FitnessDashboard';
@@ -59,13 +63,14 @@ import Payment from './payment';
 import TrainersModule from './TrainersModule';
 import MealPlanPage from './MealPlanPage';
 import MembershipPayment from './membershipPayment';
+import SetGymTimingsScreen from './SetGymTimingsScreen';
 const Stack = createStackNavigator();
 export default function App()  {
   return (
     <PaperProvider>
     <NavigationContainer>
     <Stack.Screen
-  name="Newhome"
+  name="NewHome"
   component={NewHome}
   options={{ headerShown: false }} // Hide the header
 />
@@ -96,6 +101,15 @@ export default function App()  {
         options={{headerShown:false}}
 
       /> 
+
+      
+      
+<Stack.Screen name="NotificationScreen" component={NotificationScreen}  options={{ headerShown: false }}/>
+               <Stack.Screen name="SetGymTimingsScreen" component={SetGymTimingsScreen}  options={{ headerShown: false }}/>
+               <Stack.Screen name="SendNotificationScreen" component={SendNotificationScreen}  options={{ headerShown: false }}/>
+         <Stack.Screen name="Store" component={Store}  options={{ headerShown: false }}/>
+        <Stack.Screen name="Cart" component={Cart}  options={{ headerShown: false }}/>
+        <Stack.Screen name="AddItemScreen" component={AddItemScreen}  options={{ headerShown: false }}/>
        <Stack.Screen name="TrainerSignUpScreen" component={TrainerSignUpScreen}  options={{ headerShown: false }}/>
        <Stack.Screen name="SessionsScreen" component={SessionsScreen}  options={{ headerShown: false }}/>
        <Stack.Screen name="TrainerSignInScreen" component={TrainerSignInScreen}  options={{ headerShown: false }}/>
@@ -113,7 +127,7 @@ export default function App()  {
           <Stack.Screen name="TutorialHome" component={TutorialHome}/>
           <Stack.Screen name="BodyPartVideosScreen" component={BodyPartVideosScreen} />
           <Stack.Screen name= "AdminLoginScreen" component={AdminLoginScreen}/>
-          <Stack.Screen name= "Store" component={Payment}/>
+          <Stack.Screen name= "Payment" component={Payment}/>
           <Stack.Screen name="MealPlanPage" component={MealPlanPage} />
           <Stack.Screen name= "MemberSupportScreen" component={MemberSupportScreen}/>
           <Stack.Screen name= "UserDashboard" component={UserDashboard}/>

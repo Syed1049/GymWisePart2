@@ -20,7 +20,7 @@ const TutorialScreen = () => {
     try {
       const response = await axios.get('https://exercisedb.p.rapidapi.com/exercises', {
         params: {
-          limit: 30,
+          limit: 500,
           equipment: selectedEquipment || undefined,
           name: searchQuery,
         },

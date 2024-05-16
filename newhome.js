@@ -49,9 +49,7 @@ const NewHome = () => {
             if (selectedRole === 'Member') {
               navigation.navigate('SignUpScreen');
             }
-            if (selectedRole === 'Admin') {
-              navigation.navigate('AdminLoginScreen');
-            }
+       
             if (selectedRole === 'Trainer') {
               navigation.navigate('TrainerSignUpScreen');
             }
@@ -69,6 +67,9 @@ const NewHome = () => {
             if (selectedRole === 'Trainer') {
               navigation.navigate('TrainerSignInScreen');
        
+            }
+            if (selectedRole === 'Admin') {
+              navigation.navigate('AdminLoginScreen');
             }
           }
           

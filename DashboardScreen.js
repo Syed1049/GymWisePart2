@@ -16,7 +16,7 @@ import PurchaseMembership from "./purchaseMembership";
 import MembershipPayment from "./membershipPayment";
 import { supabase } from './supabase'; // Import your supabase instance
 import { useFocusEffect } from '@react-navigation/native';
-
+import{clearUserSession} from './SessionService'
 
 // Set up Supabase client
 // const supabaseUrl = 'https://rjuibysbrnwraxvzavtk.supabase.co';
@@ -106,7 +106,7 @@ const DashboardScreen =  () => {
     { id: "3", title: "Schedules", icon: require("./assets/Calendar.png") },
     { id: "4", title: "Goals", icon: require("./assets/Goal.png") },
     { id: "5", title: "Meal Plan", icon: require("./assets/DietPlan.png") },
-    { id: "6", title: "Guest Pass", icon: require("./assets/GuestPass.png") },
+    { id: "6", title: "Notifications", icon: require("./assets/GuestPass.png") },
     {
       id: "7",
       title: "Support",
@@ -121,7 +121,17 @@ const DashboardScreen =  () => {
     console.log("screen", screen);
     navigation.navigate(screen); // Using the navigate function with the screen name
   };
+const handlelogoutpress=()=>{
 
+    try {
+     clearUserSession(); // Call the clearUserSession function to clear the user session
+      // Navigate to the login screen or any other desired screen after logout
+      navigation.navigate('SignInScreen');
+    } catch (error) {
+      console.error('Error logging out:', error.message);
+    }
+
+};
 
   console.log(userData);
 
@@ -148,10 +158,10 @@ const DashboardScreen =  () => {
             break;
             
             case 'Diet Plan':
-              screenName = 'DietPlanPage';
+              screenName = 'TutorialHome';
               break;
-            case 'GuestPlans':
-              screenName = 'GuestPlans';
+            case 'Notifications':
+              screenName = 'NotificationScreen';
               break;
               case 'Support':
             screenName = 'MemberSupportScreen';
@@ -164,7 +174,7 @@ const DashboardScreen =  () => {
             screenName = "Store";
             break;
           default:
-            screenName = "OtherScreen"; // A generic catch-all for other screens
+            screenName = "Otherscreen"; // A generic catch-all for other screens
             break;
         }
         handleNavigation(screenName);
@@ -196,7 +206,7 @@ const DashboardScreen =  () => {
     navigation.navigate('MembershipPayment')
       )}
 
-      <TouchableOpacity style={styles.logoutButton}>
+      <TouchableOpacity style={styles.logoutButton}onPress={handlelogoutpress}>
         <Text style={styles.logoutButtonText}>Log Out</Text>
       </TouchableOpacity>
     </SafeAreaView>

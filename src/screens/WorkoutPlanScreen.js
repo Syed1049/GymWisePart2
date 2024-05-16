@@ -23,7 +23,7 @@ const WorkoutPlanScreen = ({ route }) => {
                 {exercise.exercise_desc ? exercise.exercise_desc : "No description available"}
               </Text>
               <Text style={styles.heading}>Body Part:</Text>
-              <Text style={styles.exerciseDetail}>{exercise.exercise_muscle}</Text>
+              <Text style={styles.exerciseDetail}>{exercise.exercise_bodysection}</Text>
               <Text style={styles.heading}>Equipment:</Text>
               <Text style={styles.exerciseDetail}>{exercise.exercise_equipment}</Text>
               <Text style={styles.heading}>Reps:</Text>

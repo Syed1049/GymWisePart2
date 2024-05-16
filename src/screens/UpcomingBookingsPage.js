@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { supabase } from '../../supabase';
 import { getUserSession } from './SessionService';
 
-const UpcomingBookingsPage = ({ navigation }) => { // Accept navigation prop
+const UpcomingBookingsPage = ({ navigation }) => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -22,11 +22,14 @@ const UpcomingBookingsPage = ({ navigation }) => { // Accept navigation prop
         const { data: upcomingBookings, error } = await supabase
           .from('bookings')
           .select('*')
-          .eq('memberid', userId); // Filter bookings by memberid of logged-in user
+          .eq('memberid', userId);
 
         if (error) {
           throw error;
         }
+
+        // Sort bookings by date
+        upcomingBookings.sort((a, b) => new Date(a.date) - new Date(b.date));
         setBookings(upcomingBookings || []);
         setLoading(false);
       } catch (error) {
@@ -40,7 +43,7 @@ const UpcomingBookingsPage = ({ navigation }) => { // Accept navigation prop
   }, []);
 
   const handleAddButtonPress = () => {
-    navigation.navigate('BookingPage'); // Navigate to BookingPage
+    navigation.navigate('BookingPage');
   };
 
   if (loading) {
@@ -59,8 +62,18 @@ const UpcomingBookingsPage = ({ navigation }) => { // Accept navigation prop
     );
   }
 
+  // Group bookings by date
+  const groupedBookings = {};
+  bookings.forEach(booking => {
+    const date = new Date(booking.date).toLocaleDateString();
+    if (!groupedBookings[date]) {
+      groupedBookings[date] = [];
+    }
+    groupedBookings[date].push(booking);
+  });
+
   return (
-    <View style={[styles.container, styles.blackBackground]}>
+    <ScrollView style={[styles.container, styles.blackBackground]}>
       <View style={styles.headingContainer}>
         <Text style={styles.heading}>Upcoming Bookings</Text>
       </View>
@@ -68,19 +81,21 @@ const UpcomingBookingsPage = ({ navigation }) => { // Accept navigation prop
         <Text style={[styles.addButtonText, styles.whiteText, styles.bigPlus]}>+</Text>
       </TouchableOpacity>
       <View style={styles.bookingList}>
-        {bookings.length === 0 ? (
-          <Text style={styles.whiteText}>No upcoming bookings available.</Text>
-        ) : (
-          bookings.map((booking, index) => (
-            <View key={index} style={styles.bookingContainer}>
-              <Text style={styles.whiteText}>Date: {new Date(booking.date).toLocaleDateString()}</Text>
-              <Text style={styles.whiteText}>Time Slot: {booking.timeslot}</Text>
-              <Text style={styles.whiteText}>Equipment ID: {booking.equipmentid}</Text>
-            </View>
-          ))
-        )}
-      </View>
+        {Object.entries(groupedBookings).map(([date, bookings]) => (
+          <View key={date}>
+  <Text style={[styles.whiteText, styles.dateHeading]}>{date}</Text>
+  {bookings.map((booking, bookingIndex) => (
+    <View key={`${date}-${bookingIndex}`} style={styles.bookingContainer}>
+      <Text style={styles.whiteText}>Time Slot: {booking.timeslot}</Text>
+      <Text style={styles.whiteText}>Equipment ID: {booking.equipmentid}</Text>
     </View>
+  ))}
+</View>
+
+
+        ))}
+      </View>
+    </ScrollView>
   );
 };
 
@@ -93,7 +108,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'black',
   },
   headingContainer: {
-    marginTop:100, // Adjusted margin top for the heading
+    marginTop:100,
     alignItems: 'center',
   },
   heading: {
@@ -105,7 +120,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 20,
     right: 20,
-    backgroundColor: '#333333', // Transparent background
+    backgroundColor: '#333333',
     width: 60,
     height: 60,
     borderRadius: 50,
@@ -114,20 +129,28 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   addButtonText: {
-    fontSize: 50, // Increased font size for the plus sign
+    fontSize: 50,
     fontWeight: 'bold',
   },
   bigPlus: {
-    fontSize: 48, // Increased font size for the plus sign
+    fontSize: 48,
+    color:'#CA9329',
   },
   whiteText: {
-    color: 'white', // White color
+    color: 'white',
   },
   bookingList: {
-    marginTop: 20, // Adjusted margin top
+    marginTop: 20,
+  },
+  dateHeading: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginTop: 20,
+    marginBottom: 10,
+    color: '#CA9329', // Yellow color for date heading
   },
   bookingContainer: {
-    backgroundColor: '#333333', // Dark grey background
+    backgroundColor: '#333333',
     padding: 20,
     marginBottom: 20,
     borderRadius: 10,

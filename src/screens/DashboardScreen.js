@@ -16,7 +16,7 @@ import PurchaseMembership from "./purchaseMembership";
 import MembershipPayment from "./membershipPayment";
 import { supabase } from '../../supabase'; // Import your supabase instance
 import { useFocusEffect } from '@react-navigation/native';
-
+import{clearUserSession} from './SessionService'
 
 // Set up Supabase client
 // const supabaseUrl = 'https://rjuibysbrnwraxvzavtk.supabase.co';
@@ -121,7 +121,17 @@ const DashboardScreen =  () => {
     console.log("screen", screen);
     navigation.navigate(screen); // Using the navigate function with the screen name
   };
+const handlelogoutpress=()=>{
 
+    try {
+     clearUserSession(); // Call the clearUserSession function to clear the user session
+      // Navigate to the login screen or any other desired screen after logout
+      navigation.navigate('SignInScreen');
+    } catch (error) {
+      console.error('Error logging out:', error.message);
+    }
+
+};
 
   console.log(userData);
 
@@ -149,9 +159,11 @@ const DashboardScreen =  () => {
             
             case 'Meal Plan':
               screenName = 'MealPlanPage';
+            case 'Diet Plan':
+              screenName = 'TutorialHome';
               break;
-            case 'GuestPlans':
-              screenName = 'GuestPlans';
+            case 'Notifications':
+              screenName = 'NotificationScreen';
               break;
               case 'Support':
             screenName = 'MemberSupportScreen';
@@ -164,7 +176,7 @@ const DashboardScreen =  () => {
             screenName = "Store";
             break;
           default:
-            screenName = "OtherScreen"; // A generic catch-all for other screens
+            screenName = "Otherscreen"; // A generic catch-all for other screens
             break;
         }
         handleNavigation(screenName);

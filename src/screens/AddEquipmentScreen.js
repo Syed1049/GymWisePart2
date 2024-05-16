@@ -14,31 +14,40 @@ import { supabase } from '../../supabase';
 const AddEquipmentScreen = () => {
   const [equipmentList, setEquipmentList] = useState([]);
   const [selectedEquipment, setSelectedEquipment] = useState('');
-  const [manualEquipmentName, setManualEquipmentName] = useState('');
   const [quantity, setQuantity] = useState('');
   const [weight, setWeight] = useState('');
+
   useEffect(() => {
     fetchEquipmentList();
   }, []);
 
   const handleSubmit = async () => {
     try {
-      if (!selectedEquipment && !manualEquipmentName) {
-        throw new Error('Please select or enter an equipment name.');
+      if (!selectedEquipment) {
+        throw new Error('Please select an equipment.');
       }
   
-      const equipmentName = selectedEquipment ? selectedEquipment : manualEquipmentName;
-      const equipmentQuantity = quantity ? parseInt(quantity) : 1; // Default to 1 if quantity is not provided
+      const selectedEquipmentData = equipmentList.find(equipment => equipment.equipmentid === selectedEquipment);
   
-      const equipmentId = await addEquipment({ equipmentname: equipmentName, quantity: equipmentQuantity });
-  
-      if (equipmentId) {
-        const insertedInstances = await addEquipmentInstances(equipmentId, equipmentName, equipmentQuantity, weight);
-        console.log('Inserted instances:', insertedInstances);
+      if (!selectedEquipmentData) {
+        throw new Error('Invalid selected equipment.');
       }
+  
+      if (selectedEquipmentData.weighted_category && (!weight || !quantity)) {
+        throw new Error('Please enter both weight and quantity for weighted equipment.');
+      }
+  
+      if (!selectedEquipmentData.weighted_category && !quantity) {
+        throw new Error('Please enter quantity for non-weighted equipment.');
+      }
+  
+      const equipmentId = selectedEquipmentData.equipmentid;
+      const equipmentName = selectedEquipmentData.equipmentname;
+      const equipmentQuantity = quantity ? parseInt(quantity) : 1;
+  
+      const insertedInstances = await addEquipmentInstances(equipmentId, equipmentName, equipmentQuantity, weight);
   
       setSelectedEquipment('');
-      setManualEquipmentName('');
       setQuantity('');
       setWeight('');
   
@@ -46,74 +55,47 @@ const AddEquipmentScreen = () => {
       console.log('success: equipment and instances added');
     } catch (error) {
       console.error('Error adding equipment:', error.message);
-      Alert.alert('Error', 'Failed to add equipment. Please try again.');
+      Alert.alert('Error', `Failed to add equipment. ${error.message}`);
     }
   };
-  
-  
-  
-  const addEquipment = async (equipmentData) => {
-    try {
-      const { data, error } = await supabase.from('equipment').insert([equipmentData], { returning: 'minimal' });
-  
-      if (error) {
-        throw error;
-      }
-  
-      // Fetch the latest inserted ID
-      const { data: insertedData, error: insertedError } = await supabase
-        .from('equipment')
-        .select('equipmentid')
-        .order('equipmentid', { ascending: false })
-        .limit(1);
-  
-      if (insertedError) {
-        throw insertedError;
-      }
-  
-      const lastInsertedId = insertedData[0].equipmentid;
-      console.log(lastInsertedId);
-      return lastInsertedId;
-    } catch (error) {
-      console.error('Error adding equipment:', error.message);
-      throw error;
-    }
-  };
-  
-  
-
-  const fetchEquipmentList = async () => {
-    try {
-      const { data, error } = await supabase.from('equipment').select('*');
-      if (error) {
-        throw error;
-      }
-      setEquipmentList(data);
-    } catch (error) {
-      console.error('Error fetching equipment list:', error.message);
-    }
-  };
-
   const addEquipmentInstances = async (equipmentId, equipmentName, quantity, weight = null) => {
     try {
       console.log('Equipment ID:', equipmentId);
   
       const insertedInstances = [];
   
-      // Generate an array of equipment instances
-      const instances = Array.from({ length: quantity }, (_, i) => {
-        const uniqueIdentifier = `${equipmentName.toLowerCase().replace(/\s+/g, '')}${('000' + (i + 1)).slice(-3)}`;
-        return {
+      // Fetch existing unique identifiers for the selected equipment
+      const { data: existingInstances, error: instancesError } = await supabase
+        .from('equipment_instances')
+        .select('unique_identifier')
+        .eq('equipmentid', equipmentId);
+  
+      if (instancesError) {
+        throw instancesError;
+      }
+  
+      // Find the last unique identifier from the existing instances
+      const lastIdentifier = existingInstances.reduce((last, instance) => {
+        const numberPart = parseInt(instance.unique_identifier.slice(-3), 10);
+        return Math.max(last, numberPart);
+      }, 0);
+  
+      // Generate instances with dynamically incremented unique identifiers
+      const instances = [];
+  
+      for (let i = lastIdentifier + 1; i <= lastIdentifier + quantity; i++) {
+        const uniqueIdentifier = `${equipmentName.toLowerCase().replace(/\s+/g, '')}${('000' + i).slice(-3)}`;
+  
+        instances.push({
           equipmentid: equipmentId,
           unique_identifier: uniqueIdentifier,
           weight: weight ? parseFloat(weight) : null,
           availability: true,
-        };
-      });
+        });
+      }
   
       console.log('Adding equipment instances:', instances);
   
-      // Insert all instances in a single operation
       const { error } = await supabase.from('equipment_instances').insert(instances, { returning: 'minimal' });
   
       if (error) {
@@ -131,6 +113,19 @@ const AddEquipmentScreen = () => {
   
   
   
+
+  const fetchEquipmentList = async () => {
+    try {
+      const { data, error } = await supabase.from('equipment').select('*');
+      if (error) {
+        throw error;
+      }
+      setEquipmentList(data);
+    } catch (error) {
+      console.error('Error fetching equipment list:', error.message);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.centeredSection}>
@@ -139,12 +134,8 @@ const AddEquipmentScreen = () => {
           <View style={styles.pickerContainer}>
             <Text style={styles.label}>Select Equipment:</Text>
             <Picker
-              enabled={!manualEquipmentName}
               selectedValue={selectedEquipment}
-              onValueChange={(itemValue) => {
-                setSelectedEquipment(itemValue);
-                setManualEquipmentName('');
-              }}
+              onValueChange={(itemValue) => setSelectedEquipment(itemValue)}
               style={styles.picker}
             >
               <Picker.Item label="Select Equipment" value="" />
@@ -153,36 +144,43 @@ const AddEquipmentScreen = () => {
               ))}
             </Picker>
           </View>
-          {!selectedEquipment && (
+          {selectedEquipment && equipmentList.find(equipment => equipment.equipmentid === selectedEquipment)?.weighted_category && (
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>Equipment Name:</Text>
+              <Text style={styles.label}>Weight:</Text>
               <TextInput
-                style={styles.input}
-                value={manualEquipmentName}
-                onChangeText={(text) => setManualEquipmentName(text)}
-                placeholder="Enter Equipment Name"
-              />
+  style={styles.input}
+  value={weight}
+  onChangeText={(text) => {
+    if (/^\d*$/.test(text) || text === '') {
+      setWeight(text);
+    } else {
+      // Notify the user that only numbers are allowed
+      Alert.alert('Error', 'Please enter numbers only.');
+    }
+  }}
+  placeholder="Enter Weight"
+  keyboardType="numeric"
+/>
+
             </View>
           )}
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Quantity:</Text>
             <TextInput
-              style={styles.input}
-              value={quantity}
-              onChangeText={(text) => setQuantity(text)}
-              placeholder="Enter Quantity"
-              keyboardType="numeric"
-            />
-          </View>
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Weight (Optional):</Text>
-            <TextInput
-              style={styles.input}
-              value={weight}
-              onChangeText={(text) => setWeight(text)}
-              placeholder="Enter Weight (Optional)"
-              keyboardType="numeric"
-            />
+  style={styles.input}
+  value={quantity}
+  onChangeText={(text) => {
+    if (/^\d*$/.test(text) || text === '') {
+      setQuantity(text);
+    } else {
+      // Notify the user that only numbers are allowed
+      Alert.alert('Error', 'Please enter numbers only.');
+    }
+  }}
+  placeholder="Enter Quantity"
+  keyboardType="numeric"
+/>
+
           </View>
           <TouchableOpacity style={styles.button} onPress={handleSubmit}>
             <Text style={styles.buttonText}>Add Equipment</Text>

@@ -16,7 +16,7 @@ const UpdateAvailabilityScreen = () => {
   const [selectedEquipment, setSelectedEquipment] = useState('');
   const [selectedInstance, setSelectedInstance] = useState('');
   const [instancesList, setInstancesList] = useState([]);
-  const [availability, setAvailability] = useState(true);
+  const [availability, setAvailability] = useState(true); // Initialize with default value
 
   useEffect(() => {
     fetchEquipmentList();
@@ -27,6 +27,14 @@ const UpdateAvailabilityScreen = () => {
       fetchEquipmentInstances(selectedEquipment);
     }
   }, [selectedEquipment]);
+
+  useEffect(() => {
+    // Update availability switch based on the selected instance's availability
+    const selectedInstanceData = instancesList.find(instance => instance.unique_identifier === selectedInstance);
+    if (selectedInstanceData) {
+      setAvailability(selectedInstanceData.availability);
+    }
+  }, [selectedInstance, instancesList]);
 
   const fetchEquipmentList = async () => {
     try {
@@ -57,28 +65,34 @@ const UpdateAvailabilityScreen = () => {
 
   const handleUpdateAvailability = async () => {
     try {
-      if (!selectedInstance) {
-        throw new Error('Please select an equipment instance.');
+      if (!selectedEquipment || !selectedInstance) {
+        throw new Error('Please select both an equipment and an equipment instance.');
       }
-
+  
+      if (availability === instancesList.find(instance => instance.unique_identifier === selectedInstance)?.availability) {
+        Alert.alert('Info', 'Availability remains unchanged.');
+        return;
+      }
+  
       // Update availability of selected equipment instance
       const { error } = await supabase
         .from('equipment_instances')
         .update({ availability: availability })
         .eq('unique_identifier', selectedInstance);
-
+  
       if (error) {
         throw error;
       }
-
+  
       Alert.alert('Success', 'Availability updated successfully.');
       console.log('Success: Availability updated');
     } catch (error) {
       console.error('Error updating availability:', error.message);
-      Alert.alert('Error', 'Failed to update availability. Please try again.');
+      Alert.alert('Error', error.message);
     }
   };
-
+  
+  
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.centeredSection}>

@@ -5,11 +5,12 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Image,
   FlatList,
   StatusBar,
+  Image
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native'; // Import useNavigation
+import { useNavigation } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 
 const AdminDashboard = () => {
   const navigation = useNavigation(); // Hook to access the navigation prop
@@ -27,62 +28,43 @@ const AdminDashboard = () => {
     { id: '9', title: 'Store', icon: require('../../assets/Shop.png') },
   ];
 
-  // Function to handle navigation on button press
   const handleNavigation = (screen) => {
-    navigation.navigate(screen); // Using the navigate function with the screen name
+    navigation.navigate(screen);
   };
 
-  // Render function for menu items
   const renderMenuItem = ({ item }) => (
     <TouchableOpacity
       style={styles.menuItem}
       onPress={() => {
-        // Determine which screen to navigate to based on the item's title
         let screenName = '';
         switch (item.title) {
-          case 'Memberships':
+          case 'Equipment Dashboard':
             screenName = 'EquipmentHomeScreen';
             break;
-            
-            case 'Trainers':
-              screenName = 'ManageEquipmentScreen';
-              break;
-            case 'Schedules':
-              screenName = 'AddEquipmentScreen';
-              break;
-              case 'Goals':
-            screenName = 'GoalsScreen';
+          case 'Manage Support Requests':
+            screenName = 'ManageSupportRequestsScreen';
             break;
-            
-            case 'Diet Plan':
-              screenName = 'TutorialHome';
-              break;
-            case 'GuestPlans':
-              screenName = 'GuestPlans';
-              break;
-              case 'Support':
-            screenName = 'MemberSupportScreen';
+          case 'Manage Store Options':
+            screenName ='AddItemScreen';
             break;
-            
-            case 'Scan':
-              screenName = 'Scan';
-              break;
-            case 'Store':
-              screenName = 'Store';
-              break;
+          case 'Set Gym Timings':
+            screenName = 'SetGymTimingsScreen';
+            break;
+          case 'Send Notifications':
+            screenName = 'SendNotificationScreen';
+            break;
           default:
-            screenName = 'OtherScreen'; // A generic catch-all for other screens
+            screenName = 'SendNotificationScreen';
             break;
         }
         handleNavigation(screenName);
       }}
     >
-      <Image source={item.icon} style={styles.menuIcon} />
+      <Ionicons name={item.icon} size={60} color="white" style={styles.menuIcon} />
       <Text style={styles.menuTitle}>{item.title}</Text>
     </TouchableOpacity>
   );
 
-  // Component UI
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
@@ -104,7 +86,6 @@ const AdminDashboard = () => {
   );
 };
 
-// Styles for the component
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -124,14 +105,10 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     textAlign: 'left',
-    paddingVertical: 16,
+    paddingVertical: 20,
   },
   menuGrid: {
     paddingHorizontal: 5,
-  },
-  menuRow: {
-    justifyContent: 'space-evenly',
-    marginBottom: 16,
   },
   menuItem: {
     backgroundColor: 'transparent',
@@ -145,8 +122,6 @@ const styles = StyleSheet.create({
     margin: 7,
   },
   menuIcon: {
-    width: 60,
-    height: 60,
     marginBottom: 8,
   },
   menuTitle: {
@@ -166,7 +141,7 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
   logoutButtonText: {
-        color: 'white',
+    color: 'white',
     fontSize: 18,
     fontWeight: 'bold',
   },

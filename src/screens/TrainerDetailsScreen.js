@@ -112,6 +112,7 @@ const TrainerDetailsScreen = () => {
       });
   
       if (bookedSessionsForDay.length >= 2) {
+  
         throw new Error('You can only book a maximum of two sessions with this trainer in a single day');
       }
   
@@ -138,11 +139,33 @@ const TrainerDetailsScreen = () => {
       fetchBookedSessions();
     } catch (error) {
       console.error('Error booking slot:', error.message);
-      Alert.alert('Error', 'Failed to book the slot. Please try again later.');
+      Alert.alert('Failed to book the slot.', error.message);
     }
   };
-  
-  
+
+  const unbookSession = async (session) => {
+    try {
+      const currentTime = new Date();
+      const sessionStartTime = new Date(`${session.session_date}T${session.start_time}`);
+      if (sessionStartTime > currentTime) {
+        // Session has not started yet, proceed to unbooking
+        const { error } = await supabase.from('sessions').delete().eq('id', session.id);
+        if (error) {
+          throw new Error(error.message);
+        }
+        // Display a confirmation message to the user
+        Alert.alert('Session Unbooked', 'Your session has been successfully unbooked!');
+        // Refetch booked sessions after unbooking
+        fetchBookedSessions();
+      } else {
+        Alert.alert('Cannot Unbook', 'This session has already started and cannot be unbooked.');
+      }
+    } catch (error) {
+      console.error('Error unbooking session:', error.message);
+      Alert.alert('Error', 'Failed to unbook the session. Please try again later.');
+    }
+  };
+
   const isSlotAvailable = (slot) => {
     // Check if there is any overlapping booked session within this slot
     const isBooked = bookedSessions.some(session => (
@@ -158,16 +181,36 @@ const TrainerDetailsScreen = () => {
     return <Text>Loading...</Text>;
   }
 
+  // Filter out past slots from availableSlots
+  const futureAvailableSlots = availableSlots.filter(slot => slot.start > new Date());
+
+  // Filter out past sessions from bookedSessions
+  const futureBookedSessions = bookedSessions.filter(session => new Date(session.session_date) >= new Date());
+
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScrollView contentContainerStyle={styles.scrollViewContent}>
       <Text style={styles.heading}>{trainer.name}'s Available Slots</Text>
       <View style={styles.trainerInfo}>
      
       </View>
+      <View style={styles.previousSessions}>
+        <Text style={styles.sectionHeading}>Upcoming Sessions:</Text>
+        <ScrollView>
+          {futureBookedSessions.map((session, index) => (
+            <View key={index} style={styles.previousSessionItem}>
+              <Text style={styles.sessionText}>Date: {new Date(session.session_date).toDateString()}</Text>
+              <Text style={styles.sessionText}>Time: {session.start_time} - {session.end_time}</Text>
+              <TouchableOpacity style={styles.unbookButton} onPress={() => unbookSession(session)}>
+                <Text style={styles.unbookButtonText}>Unbook</Text>
+              </TouchableOpacity>
+            </View>
+          ))}
+        </ScrollView>
+      </View>
       <View style={styles.availableSlots}>
         <Text style={styles.sectionHeading}>Available Slots:</Text>
         <ScrollView>
-          {availableSlots.map((slot, index) => (
+          {futureAvailableSlots.map((slot, index) => (
             <TouchableOpacity key={index} style={[styles.slotItem, !isSlotAvailable(slot) && styles.bookedSlotItem]} onPress={() => bookSlot(slot)} disabled={!isSlotAvailable(slot)}>
               <Text style={styles.slotText}>Date: {slot.start && slot.start.toDateString()}</Text>
               <Text style={styles.slotText}>Time: {slot.start && slot.start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {slot.end && slot.end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
@@ -183,8 +226,8 @@ const TrainerDetailsScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  scrollViewContent: {
+    flexGrow: 1,
     backgroundColor: 'black',
     padding: 20,
     paddingTop: 40,
@@ -203,7 +246,7 @@ const styles = StyleSheet.create({
     color: 'white',
     marginBottom: 10,
   },
-  availableSlots: {
+  previousSessions: {
     marginBottom: 20,
   },
   sectionHeading: {
@@ -218,10 +261,24 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     marginBottom: 10,
   },
+  previousSessionItem: {
+    backgroundColor: '#333333',
+    padding: 10,
+    borderRadius: 5,
+    marginBottom: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center', // Align items vertically
+    flexWrap: 'wrap', // Allow content to wrap to the next line if needed
+  },
   bookedSlotItem: {
     backgroundColor: '#666', // Adjust the color for booked slots
   },
   slotText: {
+    color: 'white',
+    fontSize: 16,
+  },
+  sessionText: {
     color: 'white',
     fontSize: 16,
   },
@@ -231,10 +288,21 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     marginTop: 10,
   },
+  unbookButton: {
+    backgroundColor: '#E53935',
+    padding: 10,
+    borderRadius: 5,
+    marginTop: 10,
+  },
   bookButtonDisabled: {
     backgroundColor: '#888', // Adjust the color for disabled state
   },
   bookButtonText: {
+    color: 'white',
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  unbookButtonText: {
     color: 'white',
     fontSize: 16,
     textAlign: 'center',
